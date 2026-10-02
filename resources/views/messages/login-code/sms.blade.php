@@ -1,0 +1,1 @@
+{!! config('app.name') !!} login code is {!! $code !!}. It expires in {!! $minutes !!} minutes.

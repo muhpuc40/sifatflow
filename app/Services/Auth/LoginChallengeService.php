@@ -1,0 +1,128 @@
+<?php
+
+namespace App\Services\Auth;
+
+use App\Enums\MessageChannel;
+use App\Support\Mask;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
+
+/**
+ * Keeps a login "in progress" between the password step and the code step.
+ * Stored in the cache (no table needed), and it expires by itself.
+ */
+class LoginChallengeService
+{
+    public const CHALLENGE_TTL = 600;  // 10 minutes to finish the login
+    public const CODE_TTL = 300;       // a code is valid for 5 minutes
+    public const RESEND_AFTER = 60;    // seconds between two codes
+    public const MAX_ATTEMPTS = 5;     // wrong codes before the login must start again
+
+    public function start(string $type, int $userId, array $device, ?int $revokeDeviceId): string
+    {
+        $id = Str::random(40);
+
+        $this->save($id, [
+            'user_type' => $type,
+            'user_id' => $userId,
+            'device' => $device,
+            'revoke_device_id' => $revokeDeviceId,
+            'expires_at' => time() + self::CHALLENGE_TTL,
+            'code_hash' => null,
+            'code_expires_at' => null,
+            'code_sent_at' => null,
+            'attempts' => 0,
+        ]);
+
+        return $id;
+    }
+
+    public function find(string $id, string $type): ?array
+    {
+        $challenge = Cache::get($this->key($id));
+
+        return ($challenge && $challenge['user_type'] === $type) ? $challenge : null;
+    }
+
+    /** The masked email and phone the user can choose from. */
+    public function options($user): array
+    {
+        $options = [
+            ['channel' => MessageChannel::Email->value, 'masked' => Mask::email($user->email)],
+        ];
+
+        if ($user->phone) {
+            $options[] = ['channel' => MessageChannel::Sms->value, 'masked' => Mask::phone($user->phone)];
+        }
+
+        return $options;
+    }
+
+    public function makeCode(): string
+    {
+        return str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+    }
+
+    public function secondsUntilResend(array $challenge): int
+    {
+        return max(0, (int) $challenge['code_sent_at'] + self::RESEND_AFTER - time());
+    }
+
+    public function storeCode(string $id, array $challenge, string $code): void
+    {
+        $challenge['code_hash'] = $this->hash($code);
+        $challenge['code_sent_at'] = time();
+        $challenge['code_expires_at'] = time() + self::CODE_TTL;
+        $challenge['attempts'] = 0;
+
+        $this->save($id, $challenge);
+    }
+
+    /** @return string ok | wrong | expired | locked | no_code */
+    public function verify(string $id, array $challenge, string $code): string
+    {
+        if (! $challenge['code_hash']) {
+            return 'no_code';
+        }
+
+        if (time() > $challenge['code_expires_at']) {
+            return 'expired';
+        }
+
+        if (hash_equals($challenge['code_hash'], $this->hash($code))) {
+            return 'ok';
+        }
+
+        $challenge['attempts']++;
+
+        if ($challenge['attempts'] >= self::MAX_ATTEMPTS) {
+            $this->forget($id);
+
+            return 'locked';
+        }
+
+        $this->save($id, $challenge);
+
+        return 'wrong';
+    }
+
+    public function forget(string $id): void
+    {
+        Cache::forget($this->key($id));
+    }
+
+    private function save(string $id, array $challenge): void
+    {
+        Cache::put($this->key($id), $challenge, max(1, $challenge['expires_at'] - time()));
+    }
+
+    private function hash(string $code): string
+    {
+        return hash_hmac('sha256', $code, (string) config('app.key'));
+    }
+
+    private function key(string $id): string
+    {
+        return 'login_challenge:'.$id;
+    }
+}
