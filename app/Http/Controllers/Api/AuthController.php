@@ -256,7 +256,6 @@ class AuthController extends Controller
         return response()->json([
             'token' => $token->plainTextToken,
             'user_type' => $type,
-            'registered' => $isSignup,
             'user' => $user->only(['public_id', 'name', 'email', 'phone', 'avatar']),
             'device_id' => $device->id,
         ]);
