@@ -6,6 +6,9 @@ use App\Http\Middleware\EnsureUserType;
 use App\Http\Middleware\TrackDeviceActivity;
 use Illuminate\Support\Facades\Route;
 
+// Student sign-up: 1. register  2. login/send-code  3. login/verify
+Route::post('v1/student/register', [AuthController::class, 'register'])->middleware('throttle:5,1');
+
 // /api/v1/{admin|student|instructor}/...
 Route::prefix('v1/{type}')->where(['type' => 'admin|student|instructor'])->group(function () {
 

@@ -44,9 +44,9 @@ class DemoUsersSeeder extends Seeder
             'status' => 'active',
         ]);
         Student::forceCreate($common + [
-            'name' => 'Karim Hossain',
+            'name' => 'Shariar Noman',
             'email' => 'student2@sifatflow.com',
-            'phone' => '01711000002',
+            'phone' => '01707835443',
             'status' => 'active',
         ]);
         Student::forceCreate($common + [

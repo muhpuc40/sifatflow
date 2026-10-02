@@ -6,8 +6,10 @@ use App\Actions\RegisterDeviceAction;
 use App\Enums\MessageChannel;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\LoginRequest;
+use App\Http\Requests\Api\RegisterRequest;
 use App\Http\Requests\Api\SendCodeRequest;
 use App\Http\Requests\Api\VerifyCodeRequest;
+use App\Models\Student;
 use App\Models\UserDevice;
 use App\Models\UserLoginInfo;
 use App\Services\Auth\LoginChallengeService;
@@ -18,18 +20,39 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Laravel\Pail\ValueObjects\Origin\Console;
+use Illuminate\Support\Facades\RateLimiter;
 use Throwable;
 
 /**
- * Login has 3 steps:
- *   1. login      -> password + device limit check, returns masked email/phone options
- *   2. sendCode   -> the user picks email or sms, a 6 digit code is sent
- *   3. verify     -> code is checked, the device is saved and the token is returned
+ * Login:    1. login     2. send-code     3. verify
+ * Sign-up:  1. register  2. send-code     3. verify   (students only, account is created in step 3)
  */
 class AuthController extends Controller
 {
-    // ---------------------------------------------------------------- step 1
+    // ------------------------------------------------------- sign-up, step 1
+    public function register(RegisterRequest $request, LoginChallengeService $challenges): JsonResponse
+    {
+        $challengeId = $challenges->start(
+            'student',
+            null,
+            $request->only(['device_id', 'device_name', 'platform', 'browser']),
+            null,
+            [
+                'name' => $request->name,
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'password' => Hash::make($request->password),   // never stored as plain text
+            ]
+        );
+
+        return response()->json([
+            'challenge_id' => $challengeId,
+            'expires_in' => LoginChallengeService::CHALLENGE_TTL,
+            'options' => $challenges->options($request->email, $request->phone),
+        ]);
+    }
+
+    // ------------------------------------------------------- login, step 1
     public function login(
         LoginRequest $request,
         string $type,
@@ -39,7 +62,7 @@ class AuthController extends Controller
         $model = Relation::getMorphedModel($type);
         $field = filter_var($request->login, FILTER_VALIDATE_EMAIL) ? 'email' : 'phone';
 
-        /** @var \App\Models\Admin|\App\Models\Student|\App\Models\Instructor|null $user */
+        /** @var \App\Models\Admin|Student|\App\Models\Instructor|null $user */
         $user = $model::where($field, $request->login)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
@@ -77,11 +100,11 @@ class AuthController extends Controller
         return response()->json([
             'challenge_id' => $challengeId,
             'expires_in' => LoginChallengeService::CHALLENGE_TTL,
-            'options' => $challenges->options($user),
+            'options' => $challenges->options($user->email, $user->phone),
         ]);
     }
 
-    // ---------------------------------------------------------------- step 2
+    // ------------------------------------------------------- step 2 (login and sign-up)
     public function sendCode(
         SendCodeRequest $request,
         string $type,
@@ -89,9 +112,9 @@ class AuthController extends Controller
         MessageService $messages
     ): JsonResponse {
         $challenge = $challenges->find($request->challenge_id, $type);
-        $user = $challenge ? $this->findUser($type, $challenge['user_id']) : null;
+        $contact = $challenge ? $this->contactFor($challenge, $type) : null;
 
-        if (!$user || !$user->isActive()) {
+        if (!$contact) {
             return $this->sessionExpired();
         }
 
@@ -106,12 +129,22 @@ class AuthController extends Controller
 
         $channel = MessageChannel::from($request->channel);
         $to = match ($channel) {
-            MessageChannel::Email => $user->email,
-            MessageChannel::Sms => $user->phone,
+            MessageChannel::Email => $contact['email'],
+            MessageChannel::Sms => $contact['phone'],
         };
 
         if (!$to) {
             return response()->json(['message' => 'This account has no phone number.'], 422);
+        }
+
+        // At most 5 codes per email or phone per hour (stops SMS and email spam)
+        $limitKey = 'otp-to:' . $to;
+
+        if (RateLimiter::tooManyAttempts($limitKey, 5)) {
+            return response()->json([
+                'message' => 'Too many codes were requested for this contact. Try again later.',
+                'retry_after' => RateLimiter::availableIn($limitKey),
+            ], 429);
         }
 
         $code = $challenges->makeCode();
@@ -121,8 +154,8 @@ class AuthController extends Controller
                 $channel,
                 $to,
                 'login-code',
-                ['code' => $code, 'name' => $user->name, 'minutes' => intdiv(LoginChallengeService::CODE_TTL, 60)],
-                'Your ' . config('app.name') . ' login code'
+                ['code' => $code, 'name' => $contact['name'], 'minutes' => intdiv(LoginChallengeService::CODE_TTL, 60)],
+                'Your ' . config('app.name') . ' verification code'
             );
         } catch (Throwable $e) {
             report($e);
@@ -130,7 +163,8 @@ class AuthController extends Controller
             return response()->json(['message' => 'Could not send the code. Please try again.'], 502);
         }
 
-        $challenges->storeCode($request->challenge_id, $challenge, $code);
+        RateLimiter::hit($limitKey, 3600);
+        $challenges->storeCode($request->challenge_id, $challenge, $channel->value, $code);
 
         $response = [
             'message' => 'Code sent.',
@@ -147,7 +181,7 @@ class AuthController extends Controller
         return response()->json($response);
     }
 
-    // ---------------------------------------------------------------- step 3
+    // ------------------------------------------------------- step 3 (login and sign-up)
     public function verify(
         VerifyCodeRequest $request,
         string $type,
@@ -155,9 +189,17 @@ class AuthController extends Controller
         RegisterDeviceAction $devices
     ): JsonResponse {
         $challenge = $challenges->find($request->challenge_id, $type);
-        $user = $challenge ? $this->findUser($type, $challenge['user_id']) : null;
 
-        if (!$user || !$user->isActive()) {
+        if (!$challenge) {
+            return $this->sessionExpired();
+        }
+
+        $isSignup = isset($challenge['signup']);
+
+        /** @var \App\Models\Admin|Student|\App\Models\Instructor|null $user */
+        $user = $isSignup ? null : $this->findUser($type, $challenge['user_id']);
+
+        if (!$isSignup && (!$user || !$user->isActive())) {
             return $this->sessionExpired();
         }
 
@@ -169,11 +211,22 @@ class AuthController extends Controller
             [$message, $status] = match ($result) {
                 'expired' => ['The code has expired. Request a new one.', 422],
                 'no_code' => ['Request a code first.', 422],
-                'locked' => ['Too many wrong codes. Please log in again.', 429],
+                'locked' => ['Too many wrong codes. Please start again.', 429],
                 default => ['The code is not correct.', 422],
             };
 
             return response()->json(['message' => $message], $status);
+        }
+
+        // Sign-up: the code is correct, now the account is created
+        if ($isSignup) {
+            $user = $this->createStudent($challenge);
+
+            if (!$user) {
+                $challenges->forget($request->challenge_id);
+
+                return response()->json(['message' => 'This email or phone number is already registered.'], 422);
+            }
         }
 
         // Replace the old device the user chose after the 409
@@ -203,15 +256,16 @@ class AuthController extends Controller
         return response()->json([
             'token' => $token->plainTextToken,
             'user_type' => $type,
+            'registered' => $isSignup,
             'user' => $user->only(['public_id', 'name', 'email', 'phone', 'avatar']),
             'device_id' => $device->id,
         ]);
     }
 
-    // ---------------------------------------------------------------- after login
+    // ------------------------------------------------------- after login
     public function me(Request $request): JsonResponse
     {
-        /** @var \App\Models\Admin|\App\Models\Student|\App\Models\Instructor $user */
+        /** @var \App\Models\Admin|Student|\App\Models\Instructor $user */
         $user = $request->user();
 
         return response()->json([
@@ -230,7 +284,7 @@ class AuthController extends Controller
     {
         $request->validate(['id' => ['nullable', 'regex:/^(all|\d+)$/']]);
 
-        /** @var \App\Models\Admin|\App\Models\Student|\App\Models\Instructor $user */
+        /** @var \App\Models\Admin|Student|\App\Models\Instructor $user */
         $user = $request->user();
         $id = $request->input('id');
 
@@ -256,8 +310,47 @@ class AuthController extends Controller
         return response()->json(['message' => 'Logged out.']);
     }
 
-    // ---------------------------------------------------------------- helpers
-    /** @return \App\Models\Admin|\App\Models\Student|\App\Models\Instructor|null */
+    // ------------------------------------------------------- helpers
+    /** Name, email and phone for the code message: from the sign-up data or from the existing user. */
+    private function contactFor(array $challenge, string $type): ?array
+    {
+        if (isset($challenge['signup'])) {
+            return $challenge['signup'];
+        }
+
+        $user = $this->findUser($type, $challenge['user_id']);
+
+        return ($user && $user->isActive())
+            ? ['name' => $user->name, 'email' => $user->email, 'phone' => $user->phone]
+            : null;
+    }
+
+    /** Creates the student after the code is verified. Returns null if the email or phone was taken meanwhile. */
+    private function createStudent(array $challenge): ?Student
+    {
+        $data = $challenge['signup'];
+
+        $taken = Student::withTrashed()
+            ->where('email', $data['email'])
+            ->orWhere('phone', $data['phone'])
+            ->exists();
+
+        if ($taken) {
+            return null;
+        }
+
+        return Student::forceCreate([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'phone' => $data['phone'],
+            'password' => $data['password'],   // already hashed
+            'status' => 'active',
+            // the email counts as verified only if the code was sent to the email
+            'email_verified_at' => $challenge['channel'] === MessageChannel::Email->value ? now() : null,
+        ]);
+    }
+
+    /** @return \App\Models\Admin|Student|\App\Models\Instructor|null */
     private function findUser(string $type, int $id)
     {
         $model = Relation::getMorphedModel($type);
@@ -267,7 +360,7 @@ class AuthController extends Controller
 
     private function sessionExpired(): JsonResponse
     {
-        return response()->json(['message' => 'Login session expired. Please log in again.'], 422);
+        return response()->json(['message' => 'Session expired. Please start again.'], 422);
     }
 
     private function log(Request $request, string $type, $user, string $status, ?string $reason = null, ?string $deviceId = null): void

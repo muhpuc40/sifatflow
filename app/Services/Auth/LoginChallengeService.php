@@ -8,26 +8,37 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
 /**
- * Keeps a login "in progress" between the password step and the code step.
+ * Keeps a login or sign-up "in progress" between the first step and the code step.
  * Stored in the cache (no table needed), and it expires by itself.
  */
 class LoginChallengeService
 {
-    public const CHALLENGE_TTL = 600;  // 10 minutes to finish the login
+    public const CHALLENGE_TTL = 600;  // 10 minutes to finish
     public const CODE_TTL = 300;       // a code is valid for 5 minutes
     public const RESEND_AFTER = 60;    // seconds between two codes
-    public const MAX_ATTEMPTS = 5;     // wrong codes before the login must start again
+    public const MAX_ATTEMPTS = 5;     // wrong codes before it must start again
 
-    public function start(string $type, int $userId, array $device, ?int $revokeDeviceId): string
-    {
+    /**
+     * $userId is null for a sign-up. $signup holds the new account data
+     * (name, email, phone, hashed password) until the code is verified.
+     */
+    public function start(
+        string $type,
+        ?int $userId,
+        array $device,
+        ?int $revokeDeviceId = null,
+        ?array $signup = null
+    ): string {
         $id = Str::random(40);
 
         $this->save($id, [
             'user_type' => $type,
             'user_id' => $userId,
+            'signup' => $signup,
             'device' => $device,
             'revoke_device_id' => $revokeDeviceId,
             'expires_at' => time() + self::CHALLENGE_TTL,
+            'channel' => null,
             'code_hash' => null,
             'code_expires_at' => null,
             'code_sent_at' => null,
@@ -45,14 +56,14 @@ class LoginChallengeService
     }
 
     /** The masked email and phone the user can choose from. */
-    public function options($user): array
+    public function options(string $email, ?string $phone): array
     {
         $options = [
-            ['channel' => MessageChannel::Email->value, 'masked' => Mask::email($user->email)],
+            ['channel' => MessageChannel::Email->value, 'masked' => Mask::email($email)],
         ];
 
-        if ($user->phone) {
-            $options[] = ['channel' => MessageChannel::Sms->value, 'masked' => Mask::phone($user->phone)];
+        if ($phone) {
+            $options[] = ['channel' => MessageChannel::Sms->value, 'masked' => Mask::phone($phone)];
         }
 
         return $options;
@@ -68,8 +79,9 @@ class LoginChallengeService
         return max(0, (int) $challenge['code_sent_at'] + self::RESEND_AFTER - time());
     }
 
-    public function storeCode(string $id, array $challenge, string $code): void
+    public function storeCode(string $id, array $challenge, string $channel, string $code): void
     {
+        $challenge['channel'] = $channel;
         $challenge['code_hash'] = $this->hash($code);
         $challenge['code_sent_at'] = time();
         $challenge['code_expires_at'] = time() + self::CODE_TTL;
@@ -81,7 +93,7 @@ class LoginChallengeService
     /** @return string ok | wrong | expired | locked | no_code */
     public function verify(string $id, array $challenge, string $code): string
     {
-        if (! $challenge['code_hash']) {
+        if (!$challenge['code_hash']) {
             return 'no_code';
         }
 
@@ -123,6 +135,6 @@ class LoginChallengeService
 
     private function key(string $id): string
     {
-        return 'login_challenge:'.$id;
+        return 'login_challenge:' . $id;
     }
 }
