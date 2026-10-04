@@ -37,5 +37,12 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('otp', fn (Request $request) =>
             Limit::perMinute(10)->by($request->ip().'|'.$request->input('challenge_id'))
         );
+
+        RateLimiter::for('password-reset', fn (Request $request) => [
+            Limit::perMinute(20)->by('reset-ip:'.$request->ip()),
+            Limit::perMinute(5)->by('reset-step:'.$request->ip().'|'.hash('sha256',
+                json_encode([$request->route('type'), $request->input('login'), $request->input('challenge_id')]))),
+        ]);
+
     }
 }

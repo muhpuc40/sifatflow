@@ -20,6 +20,7 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Throwable;
 
@@ -94,7 +95,9 @@ class AuthController extends Controller
             $type,
             $user->id,
             $request->only(['device_id', 'device_name', 'platform', 'browser']),
-            $revokeId
+            $revokeId,
+            null,
+            $user->password
         );
 
         return response()->json([
@@ -189,6 +192,24 @@ class AuthController extends Controller
         RegisterDeviceAction $devices
     ): JsonResponse {
         $challenge = $challenges->find($request->challenge_id, $type);
+        if (!$challenge) { return $this->sessionExpired(); }
+        return DB::transaction(function () use ($request, $type, $challenges, $devices, $challenge) {
+            if (!isset($challenge['signup'])) {
+                $model = Relation::getMorphedModel($type);
+                $model::whereKey($challenge['user_id'])->lockForUpdate()->first();
+            }
+            // Recheck the password fingerprint after taking the same account lock used by reset.
+            return $this->verifyLocked($request, $type, $challenges, $devices);
+        });
+    }
+
+    private function verifyLocked(
+        VerifyCodeRequest $request,
+        string $type,
+        LoginChallengeService $challenges,
+        RegisterDeviceAction $devices
+    ): JsonResponse {
+        $challenge = $challenges->find($request->challenge_id, $type);
 
         if (!$challenge) {
             return $this->sessionExpired();
@@ -248,7 +269,12 @@ class AuthController extends Controller
 
         $token = $user->createToken("{$type}:{$device->device_id}", [$type]);
         $device->update(['token_id' => $token->accessToken->id]);
-        $user->update(['last_login_at' => now()]);
+        $user->last_login_at = now();
+        if (!$user->verified_at) {
+            $user->verified_at = now();
+            $user->verified_channel = $challenge['channel'];
+        }
+        $user->save();
 
         $challenges->forget($request->challenge_id);
         $this->log($request, $type, $user, 'success', null, $device->device_id);
@@ -344,8 +370,9 @@ class AuthController extends Controller
             'phone' => $data['phone'],
             'password' => $data['password'],   // already hashed
             'status' => 'active',
-            // the email counts as verified only if the code was sent to the email
-            'email_verified_at' => $challenge['channel'] === MessageChannel::Email->value ? now() : null,
+            // Record the channel actually verified during registration.
+            'verified_at' => now(),
+            'verified_channel' => $challenge['channel'],
         ]);
     }
 

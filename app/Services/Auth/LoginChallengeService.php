@@ -5,6 +5,7 @@ namespace App\Services\Auth;
 use App\Enums\MessageChannel;
 use App\Support\Mask;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Str;
 
 /**
@@ -27,13 +28,15 @@ class LoginChallengeService
         ?int $userId,
         array $device,
         ?int $revokeDeviceId = null,
-        ?array $signup = null
+        ?array $signup = null,
+        ?string $passwordHash = null
     ): string {
         $id = Str::random(40);
 
         $this->save($id, [
             'user_type' => $type,
             'user_id' => $userId,
+            'password_fingerprint' => $passwordHash ? $this->hash($passwordHash) : null,
             'signup' => $signup,
             'device' => $device,
             'revoke_device_id' => $revokeDeviceId,
@@ -52,7 +55,19 @@ class LoginChallengeService
     {
         $challenge = Cache::get($this->key($id));
 
-        return ($challenge && $challenge['user_type'] === $type) ? $challenge : null;
+        if (!$challenge || $challenge['user_type'] !== $type || $challenge['expires_at'] <= time()) {
+            return null;
+        }
+        if (!isset($challenge['signup'])) {
+            $model = Relation::getMorphedModel($type);
+            $user = $model ? $model::find($challenge['user_id']) : null;
+            if (!$user || !$user->isActive() || empty($challenge['password_fingerprint']) ||
+                !hash_equals($challenge['password_fingerprint'], $this->hash($user->password))) {
+                $this->forget($id);
+                return null;
+            }
+        }
+        return $challenge;
     }
 
     /** The masked email and phone the user can choose from. */

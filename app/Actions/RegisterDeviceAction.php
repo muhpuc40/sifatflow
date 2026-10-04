@@ -15,6 +15,10 @@ class RegisterDeviceAction
      */
     public function ensureSlot($user, string $deviceId, ?int $revokeDeviceId = null): void
     {
+        if ($user->deviceLimit() < 1) {
+            throw new HttpResponseException(response()->json(['message' => 'Login is disabled: device policy is missing or zero.'], 403));
+        }
+
         // A device that is already active never needs a new slot
         if ($user->devices()->active()->where('device_id', $deviceId)->exists()) {
             return;

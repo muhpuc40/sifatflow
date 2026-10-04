@@ -22,7 +22,7 @@ class Student extends Authenticatable
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
+            'verified_at' => 'datetime',
             'last_login_at' => 'datetime',
             'date_of_birth' => 'date',
             'password' => 'hashed',

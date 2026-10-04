@@ -8,9 +8,9 @@ class UserTypeDeviceLimit extends Model
 {
     protected $fillable = ['user_type', 'max_devices'];
 
-    /** Max devices for a user type. Falls back to 2 if the row is missing. */
+    /** A missing policy returns zero so login fails closed instead of silently allowing devices. */
     public static function limitFor(string $userType): int
     {
-        return (int) (static::where('user_type', $userType)->value('max_devices') ?? 2);
+        return max(0, (int) static::where('user_type', $userType)->value('max_devices'));
     }
 }
