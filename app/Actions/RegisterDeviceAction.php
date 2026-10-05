@@ -19,9 +19,24 @@ class RegisterDeviceAction
             throw new HttpResponseException(response()->json(['message' => 'Login is disabled: device policy is missing or zero.'], 403));
         }
 
+        if (!$this->hasSlot($user, $deviceId, $revokeDeviceId)) {
+            throw new HttpResponseException(response()->json([
+                'message' => 'Device limit reached. Remove one device to continue.',
+                'limit' => $user->deviceLimit(),
+                'devices' => $user->devices()->active()->get(['id', 'device_name', 'platform', 'browser', 'last_used_at']),
+            ], 409));
+        }
+    }
+
+    /**
+     * Is there a free device slot? Same rule as ensureSlot() but returns true/false
+     * (the Blade admin login uses this and shows a page instead of a JSON 409).
+     */
+    public function hasSlot($user, string $deviceId, ?int $revokeDeviceId = null): bool
+    {
         // A device that is already active never needs a new slot
         if ($user->devices()->active()->where('device_id', $deviceId)->exists()) {
-            return;
+            return true;
         }
 
         $active = $user->devices()->active()->count();
@@ -31,13 +46,7 @@ class RegisterDeviceAction
             $active--;
         }
 
-        if ($active >= $user->deviceLimit()) {
-            throw new HttpResponseException(response()->json([
-                'message' => 'Device limit reached. Remove one device to continue.',
-                'limit' => $user->deviceLimit(),
-                'devices' => $user->devices()->active()->get(['id', 'device_name', 'platform', 'browser', 'last_used_at']),
-            ], 409));
-        }
+        return $active < $user->deviceLimit();
     }
 
     /** Last step of login (after the code is verified): save the device. */

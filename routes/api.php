@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Route;
 Route::post('v1/student/register', [AuthController::class, 'register'])->middleware('throttle:5,1');
 
 // /api/v1/{admin|student|instructor}/...
-Route::prefix('v1/{type}')->where(['type' => 'admin|student|instructor'])->group(function () {
+Route::prefix('v1/{type}')->where(['type' => 'student|instructor'])->group(function () {
 
     // Login: 1. password  2. send code  3. verify code
     Route::post('login', [AuthController::class, 'login'])->middleware('throttle:login');
