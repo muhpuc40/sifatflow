@@ -18,7 +18,7 @@ class DemoUsersSeeder extends Seeder
             Admin::firstOrCreate(['email' => 'admin@sifatflow.com'], $common + [
                 'name' => 'Super Admin',
                 'email' => 'admin@sifatflow.com',
-                'phone' => '01733000001',
+                'phone' => '01818173025',
                 'status' => 'active',
             ]);
 

@@ -14,7 +14,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Admin panel: not logged in -> login page, already logged in -> dashboard.
+        $middleware->redirectGuestsTo(fn (Request $request) => route('admin.login'));
+        $middleware->redirectUsersTo(fn (Request $request) => route('admin.dashboard'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

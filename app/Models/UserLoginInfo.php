@@ -14,6 +14,14 @@ class UserLoginInfo extends Model
         'failure_reason', 'device_id', 'ip_address', 'user_agent',
     ];
 
+    /** Use the app clock (Asia/Dhaka), not the database server clock, so times are always consistent. */
+    protected static function booted(): void
+    {
+        static::creating(function (UserLoginInfo $info) {
+            $info->created_at ??= now();
+        });
+    }
+
     protected function casts(): array
     {
         return ['created_at' => 'datetime'];
