@@ -14,7 +14,8 @@ return new class extends Migration {
             $table->string('email')->nullable();
             $table->string('phone', 20)->nullable();
             $table->string('channel', 20)->nullable();
-            $table->timestamp('challenge_expires_at');
+            // $table->timestamp('challenge_expires_at');
+            $table->dateTime('challenge_expires_at');
             $table->string('code_hash', 64)->nullable();
             $table->timestamp('code_sent_at')->nullable();
             $table->timestamp('code_expires_at')->nullable();
@@ -31,5 +32,8 @@ return new class extends Migration {
             $table->index('challenge_expires_at');
         });
     }
-    public function down(): void { Schema::dropIfExists('password_resets'); }
+    public function down(): void
+    {
+        Schema::dropIfExists('password_resets');
+    }
 };
