@@ -35,4 +35,7 @@ Route::middleware(['auth', EnsureAdminIsActive::class])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
     Route::post('logout', [LoginController::class, 'destroy'])->name('admin.logout');
 
+    // Courses, categories and the content / resource libraries
+    require __DIR__.'/admin-courses.php';
+
 });

@@ -14,6 +14,8 @@ class DatabaseSeeder extends Seeder
         // Test accounts only on a local machine
         if (app()->environment('local')) {
             $this->call(DemoUsersSeeder::class);
+            $this->call(CourseDemoSeeder::class);
+
         }
     }
 }

@@ -3,12 +3,12 @@
       <option value="active">Active</option>
   </x-admin.select>
 --}}
-@props(['name', 'label' => null, 'value' => null])
+@props(['name', 'label' => null, 'value' => null, 'id' => null])
 <div>
     @if ($label)
-        <label for="{{ $name }}" class="mb-1.5 block text-sm font-medium text-slate-700">{{ $label }}</label>
+        <label for="{{ $id ?? $name }}" class="mb-1.5 block text-sm font-medium text-slate-700">{{ $label }}</label>
     @endif
-    <select id="{{ $name }}" name="{{ $name }}" data-selected="{{ old($name, $value) }}"
+    <select id="{{ $id ?? $name }}" name="{{ $name }}" data-selected="{{ old($name, $value) }}"
             x-data x-init="if ($el.dataset.selected !== '') $el.value = $el.dataset.selected"
             {{ $attributes->class([
                 'block w-full rounded-lg border-0 px-3 py-2 text-sm text-slate-900 shadow-sm ring-1 ring-inset focus:ring-2 focus:ring-inset focus:outline-none',

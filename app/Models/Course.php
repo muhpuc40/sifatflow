@@ -7,9 +7,12 @@ use App\Enums\CourseStatus;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Support\Media;
 use Illuminate\Support\Facades\DB;
 
 class Course extends Model
@@ -25,6 +28,12 @@ class Course extends Model
             'status' => CourseStatus::class,
             'is_active' => 'boolean',
         ];
+    }
+
+    /** Link of the uploaded thumbnail (or null). */
+    protected function thumbnailUrl(): Attribute
+    {
+        return Attribute::get(fn() => Media::url($this->thumbnail));
     }
 
     /** Courses visible on the public website. */
@@ -44,6 +53,12 @@ class Course extends Model
         return $this->hasMany(CourseCurriculum::class, 'course_list_id')->orderBy('sort_order');
     }
 
+    /** All modules of all stages. */
+    public function modules(): HasManyThrough
+    {
+        return $this->hasManyThrough(CourseModule::class, CourseCurriculum::class, 'course_list_id', 'course_curriculum_id');
+    }
+    /** @return HasMany<CoursePrice, $this> */
     public function prices(): HasMany
     {
         return $this->hasMany(CoursePrice::class, 'course_list_id');
@@ -88,10 +103,11 @@ class Course extends Model
         bool $copyRules = true,
     ): CoursePrice {
         return DB::transaction(function () use ($actualPrice, $discountType, $discountValue, $copyRules) {
+            /** @var \App\Models\CoursePrice|null $old */
             $old = $this->prices()->where('is_active', true)->latest('id')->first();
 
             $this->prices()->where('is_active', true)->update(['is_active' => false]);
-
+            /** @var \App\Models\CoursePrice $new */
             $new = $this->prices()->create([
                 'actual_price' => $actualPrice,
                 'discount_type' => $discountType,

@@ -8,4 +8,5 @@ enum ItemType: string
     case Live = 'live';
     case Exam = 'exam';
     case Assignment = 'assignment';
+    case Resources = 'resources';
 }
