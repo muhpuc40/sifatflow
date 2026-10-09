@@ -30,6 +30,7 @@ return [
         ['label' => 'Orders', 'route' => 'admin.orders.index', 'icon' => 'credit-card', 'match' => 'admin.orders.*'],
 
         ['heading' => 'System'],
+        ['label' => 'Server', 'route' => 'admin.server.index', 'icon' => 'monitor', 'match' => 'admin.server.*'],
         ['label' => 'Settings', 'route' => 'admin.settings.index', 'icon' => 'sliders', 'match' => 'admin.settings.*'],
     ],
 
