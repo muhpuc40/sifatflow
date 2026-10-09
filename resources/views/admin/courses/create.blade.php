@@ -1,5 +1,6 @@
-<x-admin.layout title="New course">
-    <x-admin.page-header title="New course" description="Basic information first. Stages, price and the rest are added on the details page.">
+<x-admin.layout title="Create new course">
+    <x-admin.page-header title="Create new course"
+        description="Basic information first. Stages, price and the rest are added on the details page.">
         <x-admin.button :href="route('admin.courses.index')" variant="secondary">
             <x-admin.icon name="arrow-left" class="size-4" /> Back
         </x-admin.button>
@@ -7,7 +8,8 @@
 
     @if ($categories->isEmpty())
         <x-admin.alert type="warning" class="mb-6">
-            There is no category yet. <a href="{{ route('admin.categories.index') }}" class="font-medium underline">Add a category</a> first.
+            There is no category yet. <a href="{{ route('admin.categories.index') }}" class="font-medium underline">Add a
+                category</a> first.
         </x-admin.alert>
     @endif
 

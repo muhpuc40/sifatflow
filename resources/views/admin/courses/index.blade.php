@@ -1,11 +1,11 @@
 <x-admin.layout title="Courses">
     <x-admin.page-header title="Courses" description="All courses. Open one to manage its stages, price, installments and more.">
-        <x-admin.button :href="route('admin.library.content.index')" variant="secondary">
+        <!-- <x-admin.button :href="route('admin.library.content.index')" variant="secondary">
             <x-admin.icon name="video" class="size-4" /> Upload content
         </x-admin.button>
         <x-admin.button :href="route('admin.library.resources.index')" variant="secondary">
             <x-admin.icon name="folder" class="size-4" /> Upload resource
-        </x-admin.button>
+        </x-admin.button> -->
         <x-admin.button :href="route('admin.courses.create')">
             <x-admin.icon name="plus" class="size-4" /> New course
         </x-admin.button>
@@ -42,7 +42,7 @@
         <x-admin.card>
             <x-admin.empty-state icon="book"
                 :title="request()->hasAny(['q', 'category', 'status']) ? 'No course matches your filter' : 'No courses yet'"
-                message="Create the first course, then add its stages, modules and price.">
+                message="Create new course, then add its stages, modules and price.">
                 <x-admin.button :href="route('admin.courses.create')"><x-admin.icon name="plus" class="size-4" /> New course</x-admin.button>
             </x-admin.empty-state>
         </x-admin.card>
@@ -95,10 +95,12 @@
                         <div class="mt-auto flex items-end justify-between gap-3 border-t border-slate-100 pt-4">
                             <div>
                                 @if ($price)
-                                    <p class="text-lg font-semibold text-slate-900">৳{{ number_format($price->finalPrice()) }}</p>
+                                    <div class="flex items-baseline gap-2">
+                                    <p class="text-lg font-semibold text-slate-900">{{ number_format($price->finalPrice()) }}</p>
                                     @if ($price->finalPrice() < (float) $price->actual_price)
-                                        <p class="text-xs text-slate-400 line-through">৳{{ number_format((float) $price->actual_price) }}</p>
+                                        <p class="text-xs text-slate-400 line-through">{{ number_format((float) $price->actual_price) }}</p>
                                     @endif
+                                    </div>
                                 @else
                                     <p class="text-sm font-medium text-amber-600">No price set</p>
                                 @endif

@@ -7,14 +7,14 @@
             </x-admin.button>
         </x-admin.page-header>
 
-        <x-admin.flash />
+        <!-- <x-admin.flash /> -->
 
         <x-admin.card>
             @if ($contents->isEmpty())
                 <x-admin.empty-state icon="video" title="No content yet" message="Upload a video or paste a link." />
             @else
                 <x-admin.table>
-                    <x-slot:head><th>Content</th><th>Link / file</th><th>Used in</th><th class="text-right">Actions</th></x-slot:head>
+                    <x-slot:head><th>Content</th><th>Link / file</th><th>Used in</th><th>Updated</th><th class="text-right">Actions</th></x-slot:head>
                     @foreach ($contents as $content)
                         <tr>
                             <td>
@@ -31,6 +31,7 @@
                                 {{ \App\Support\Media::isExternal($content->url) ? 'External link' : basename($content->url) }}
                                 <x-admin.icon name="external-link" class="size-3.5 shrink-0" /></a></td>
                             <td>{{ $content->items_count }} {{ Str::plural('item', $content->items_count) }}</td>
+                            <td>{{ $content->updated_at }}</td>
                             <td class="whitespace-nowrap text-right">
                                 <button type="button" class="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700" title="Edit" aria-label="Edit content"
                                     @click="mode = 'edit'; action = '{{ route('admin.library.content.update', $content) }}'; form = {{ \Illuminate\Support\Js::from(['name' => $content->name, 'url' => \App\Support\Media::isExternal($content->url) ? $content->url : '']) }}; open = true">

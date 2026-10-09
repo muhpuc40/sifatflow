@@ -14,7 +14,7 @@
      }">
 
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <p class="text-sm text-slate-500">A stage (for example "Beginning") groups modules. A module holds classes, exams and assignments.</p>
+        <p class="text-sm text-slate-500">A stage groups modules. A module holds classes, exams and assignments.</p>
         <x-admin.button type="button"
             @click="show('stage', 'add', '{{ route('admin.curricula.store', $course) }}', { title: '', description: '', milestone_value: 0, duration: '', sort_order: '', is_active: true })">
             <x-admin.icon name="plus" class="size-4" /> Add stage
@@ -74,13 +74,13 @@
                                         @unless ($module->is_active) <x-admin.badge color="gray">Inactive</x-admin.badge> @endunless
                                     </h4>
                                     @if ($module->objective) <p class="mt-1 text-sm text-slate-500">{{ $module->objective }}</p> @endif
-                                    <div class="mt-2 flex flex-wrap gap-1.5">
+                                    <!-- <div class="mt-2 flex flex-wrap gap-1.5">
                                         @foreach ($itemTypes as $type)
                                             @if (($counts[$type->value] ?? 0) > 0)
                                                 <x-admin.badge color="indigo">{{ $counts[$type->value] }} {{ $type->value }}</x-admin.badge>
                                             @endif
                                         @endforeach
-                                    </div>
+                                    </div> -->
                                 </div>
                                 <div class="flex items-center gap-1">
                                     <x-admin.button type="button" variant="secondary" size="sm"
@@ -104,7 +104,7 @@
                                 <div class="mt-3 overflow-hidden rounded-lg ring-1 ring-slate-200">
                                     <x-admin.table>
                                         <x-slot:head>
-                                            <th>#</th><th>Type</th><th>Content</th><th>Resource</th><th>Flags</th><th class="text-right">Actions</th>
+                                            <th>#</th><th>Type</th><th>Content</th><th>Resource</th><th>Order</th><th>Flags</th><th class="text-right">Actions</th>
                                         </x-slot:head>
                                         @foreach ($module->items as $item)
                                             <tr>
@@ -115,6 +115,7 @@
                                                 </td>
                                                 <td>{{ $item->content?->name ?? '—' }}</td>
                                                 <td>{{ $item->resource?->name ?? '—' }}</td>
+                                                <td>{{ $item->sort_order }}</td>
                                                 <td class="space-x-1">
                                                     @if ($item->is_preview) <x-admin.badge color="green">Free preview</x-admin.badge> @endif
                                                     @unless ($item->is_active) <x-admin.badge color="gray">Inactive</x-admin.badge> @endunless
