@@ -38,5 +38,7 @@ Route::middleware(['auth', EnsureAdminIsActive::class])->group(function () {
     Route::get('server', [ServerController::class, 'index'])->name('admin.server.index');
     // Courses, categories and the content / resource libraries
     require __DIR__ . '/admin-courses.php';
+    // Batches: classes, exams, assignments
+    require __DIR__ . '/admin-batches.php';
 
 });

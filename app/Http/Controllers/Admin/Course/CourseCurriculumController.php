@@ -38,6 +38,13 @@ class CourseCurriculumController extends Controller
 
     public function destroy(CourseCurriculum $curriculum): RedirectResponse
     {
+        $itemIds = \App\Models\CourseModuleItem::whereIn('course_modules_id', $curriculum->modules()->select('id'))->pluck('id');
+
+        if ($this->usedInBatch($itemIds)) {
+            return $this->toCourse($curriculum->course_list_id, 'curriculum',
+                'This stage is used in a batch (class schedule, exam or assignment). Remove it from the batch first.', 'error');
+        }
+
         // Soft delete. Modules stay in the database, but are hidden with their stage.
         $curriculum->delete();
 

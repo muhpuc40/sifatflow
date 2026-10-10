@@ -40,6 +40,10 @@ class CourseModuleController extends Controller
     {
         $courseId = $module->curriculum->course_list_id;
 
+        if ($this->usedInBatch($module->items()->pluck('id'))) {
+            return $this->toCourse($courseId, 'curriculum', 'This is used in a batch (class schedule, exam or assignment). Remove it from the batch first.', 'error');
+        }
+
         try {
             $module->delete();   // its items are removed with it
         } catch (QueryException) {

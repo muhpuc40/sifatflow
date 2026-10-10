@@ -39,6 +39,11 @@ class CourseModuleItemController extends Controller
     public function destroy(CourseModuleItem $item): RedirectResponse
     {
         $courseId = $item->module->curriculum->course_list_id;
+
+        if ($this->usedInBatch([$item->id])) {
+            return $this->toCourse($courseId, 'curriculum', 'This is used in a batch (class schedule, exam or assignment). Remove it from the batch first.', 'error');
+        }
+
         $item->delete();
 
         return $this->toCourse($courseId, 'curriculum', 'Item deleted.');

@@ -18,6 +18,7 @@ return [
 
         ['heading' => 'Learning'],
         ['label' => 'Courses', 'route' => 'admin.courses.index', 'icon' => 'book', 'match' => 'admin.courses.*'],
+        ['label' => 'Batches', 'route' => 'admin.batches.index', 'icon' => 'layers', 'match' => 'admin.batches.*'],
         ['label' => 'Categories', 'route' => 'admin.categories.index', 'icon' => 'tag', 'match' => 'admin.categories.*'],
         ['label' => 'Content library', 'route' => 'admin.library.content.index', 'icon' => 'video', 'match' => 'admin.library.content.*'],
         ['label' => 'Resource library', 'route' => 'admin.library.resources.index', 'icon' => 'folder', 'match' => 'admin.library.resources.*'],

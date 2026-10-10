@@ -7,7 +7,6 @@
             </x-admin.button>
         </x-admin.page-header>
 
-        <!-- <x-admin.flash /> -->
 
         <x-admin.card>
             @if ($contents->isEmpty())

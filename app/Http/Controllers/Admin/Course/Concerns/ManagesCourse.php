@@ -21,4 +21,16 @@ trait ManagesCourse
         // reorder(): a relation's own ORDER BY is not allowed together with max() on MySQL
         return (int) $query->reorder()->max($column) + 1;
     }
+
+    /** True when one of these module items is already used by a batch (class, exam or assignment). */
+    protected function usedInBatch($itemIds): bool
+    {
+        foreach ([\App\Models\BatchClassSchedule::class, \App\Models\BatchExam::class, \App\Models\BatchAssignment::class] as $model) {
+            if ($model::withTrashed()->whereIn('course_module_items_id', $itemIds)->exists()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }
