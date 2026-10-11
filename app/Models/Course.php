@@ -70,6 +70,19 @@ class Course extends Model
         return $this->hasOne(CoursePrice::class, 'course_list_id')->where('is_active', true)->latestOfMany();
     }
 
+    /** The next batch a student can join (earliest start date). Used by the public API. */
+    public function openBatch(): HasOne
+    {
+        return $this->hasOne(Batch::class, 'course_list_id')
+            ->ofMany(['start_date' => 'min', 'id' => 'min'], fn(Builder $q) => $q->openForEnrollment());
+    }
+
+    /** @return HasMany<Batch, $this> */
+    public function batches(): HasMany
+    {
+        return $this->hasMany(Batch::class, 'course_list_id');
+    }
+
     public function reviews(): HasMany
     {
         return $this->hasMany(CourseReview::class, 'course_list_id');

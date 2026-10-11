@@ -38,6 +38,20 @@ class Batch extends Model
         return $query->where('is_active', true);
     }
 
+    /** Batches a new student can still join: active, not finished, deadline not passed. */
+    public function scopeOpenForEnrollment(Builder $query): Builder
+    {
+        $today = now()->toDateString();
+
+        return $query->where('is_active', true)
+            ->whereIn('status', [BatchStatus::Upcoming->value, BatchStatus::Running->value])
+            ->where(function (Builder $q) use ($today) {
+                $q->where(fn(Builder $n) => $n->whereNull('enroll_deadline')->whereNull('extended_enroll_deadline'))
+                    ->orWhere('enroll_deadline', '>=', $today)
+                    ->orWhere('extended_enroll_deadline', '>=', $today);
+            });
+    }
+
     public function course(): BelongsTo
     {
         return $this->belongsTo(Course::class, 'course_list_id')->withTrashed();
@@ -71,10 +85,22 @@ class Batch extends Model
         return $dates ? collect($dates)->max() : null;
     }
 
+    /** Seats already taken. TODO Phase 3: count the enrollments of this batch here. */
+    public function seatsTaken(): int
+    {
+        return 0;
+    }
+
+    /** Seats still free. null = unlimited. */
+    public function seatsLeft(): ?int
+    {
+        return $this->seat_limit === null ? null : max($this->seat_limit - $this->seatsTaken(), 0);
+    }
+
     /** Can a student enroll today? (Seats are checked later, with the enrollments.) */
     public function isEnrollmentOpen(): bool
     {
-        if (! $this->is_active || in_array($this->status, [BatchStatus::Completed, BatchStatus::Cancelled], true)) {
+        if (!$this->is_active || in_array($this->status, [BatchStatus::Completed, BatchStatus::Cancelled], true)) {
             return false;
         }
 
