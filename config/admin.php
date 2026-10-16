@@ -1,16 +1,5 @@
 <?php
 
-/**
- * Sidebar menu of the admin panel.
- *
- * An item is shown only when its route exists, so you can list future pages here
- * and they appear automatically once you add the route.
- *
- *  ['heading' => 'Text']                       = a section title
- *  ['label', 'route', 'icon', 'match']         = a link ('match' = route name pattern for the active state)
- *
- * Icons: see resources/views/components/admin/icon.blade.php
- */
 return [
 
     'menu' => [
