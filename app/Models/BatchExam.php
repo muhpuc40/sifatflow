@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Enums\ExamStatus;
+use App\Support\Media;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -27,6 +29,12 @@ class BatchExam extends Model
             'result_published_at' => 'datetime',
             'status' => ExamStatus::class,
         ];
+    }
+
+    /** Link of the uploaded exam paper (or null). */
+    protected function examPaperUrl(): Attribute
+    {
+        return Attribute::get(fn() => Media::url($this->exam_paper));
     }
 
     public function batch(): BelongsTo

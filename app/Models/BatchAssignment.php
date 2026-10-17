@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Enums\AssignmentStatus;
+use App\Support\Media;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -26,6 +28,12 @@ class BatchAssignment extends Model
             'allow_late' => 'boolean',
             'status' => AssignmentStatus::class,
         ];
+    }
+
+    /** Link of the uploaded assignment file (or null). */
+    protected function assignmentFileUrl(): Attribute
+    {
+        return Attribute::get(fn() => Media::url($this->assignment_file));
     }
 
     public function batch(): BelongsTo

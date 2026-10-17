@@ -23,7 +23,7 @@
                 :message="$examItems ? 'Add the first exam of this batch.' : 'This course has no exam items yet. Add them on the course curriculum first.'" />
         @else
             <x-admin.table>
-                <x-slot:head><th>Exam</th><th>Date</th><th>Duration</th><th>Marks</th><th>Result</th><th>Status</th><th class="text-right">Actions</th></x-slot:head>
+                <x-slot:head><th>Exam</th><th>Date</th><th>Duration</th><th>Marks</th><th>Paper</th><th>Result</th><th>Status</th><th class="text-right">Actions</th></x-slot:head>
                 @foreach ($batch->exams as $exam)
                     <tr>
                         <td>
@@ -36,6 +36,15 @@
                         </td>
                         <td>{{ $exam->duration_minutes }} min</td>
                         <td>{{ $exam->pass_marks }} / {{ $exam->total_marks }}</td>
+                        <td>
+                            @if ($exam->exam_paper)
+                                <a href="{{ $exam->exam_paper_url }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 text-indigo-600 hover:underline">
+                                    View <x-admin.icon name="external-link" class="size-3.5" />
+                                </a>
+                            @else
+                                <span class="text-slate-400">—</span>
+                            @endif
+                        </td>
                         <td>
                             @if ($exam->isResultPublished())
                                 <x-admin.badge color="green">Published</x-admin.badge>
@@ -69,7 +78,7 @@
     </x-admin.card>
 
     <x-admin.dialog show="open" close="open = false" title="mode === 'add' ? 'Add exam' : 'Edit exam'" max-width="max-w-xl">
-        <form method="POST" :action="action" class="space-y-4">
+        <form method="POST" :action="action" enctype="multipart/form-data" class="space-y-4">
             @csrf
             <input type="hidden" name="_modal" value="1">
             <input type="hidden" name="_method" value="PUT" :disabled="mode === 'add'">
@@ -93,6 +102,8 @@
                 </x-admin.select>
             </div>
             <x-admin.textarea id="exam_instruction" name="instruction" label="Instruction" x-model="form.instruction" rows="3" />
+            <x-admin.input id="exam_paper" name="exam_paper" type="file" accept="application/pdf" label="Exam paper (PDF)"
+                hint="Optional, up to 10 MB. Edit: leave empty to keep the current file." />
 
             <div class="flex justify-end gap-2 border-t border-slate-100 pt-4">
                 <x-admin.button type="button" variant="secondary" @click="open = false">Cancel</x-admin.button>

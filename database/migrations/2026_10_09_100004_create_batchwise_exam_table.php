@@ -17,6 +17,7 @@ return new class extends Migration {
             $table->unsignedSmallInteger('duration_minutes');
             $table->unsignedSmallInteger('total_marks');
             $table->unsignedSmallInteger('pass_marks')->default(0);
+            $table->string('exam_paper')->nullable();
             $table->dateTime('result_published_at')->nullable();
             $table->text('instruction')->nullable();
             $table->string('status', 20)->default('scheduled');    // scheduled | running | finished | cancelled

@@ -16,6 +16,7 @@ return new class extends Migration {
             $table->dateTime('assigned_at');
             $table->dateTime('due_at');
             $table->unsignedSmallInteger('total_marks');
+            $table->string('assignment_file')->nullable();
             $table->boolean('allow_late')->default(false);
             $table->string('status', 20)->default('draft');        // draft | published | closed
             $table->timestamps();

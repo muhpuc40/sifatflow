@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\Batch\Concerns\ManagesBatch;
 use App\Http\Controllers\Controller;
 use App\Models\Batch;
 use App\Models\BatchAssignment;
+use App\Support\Media;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -18,14 +19,27 @@ class BatchAssignmentController extends Controller
 
     public function store(Request $request, Batch $batch): RedirectResponse
     {
-        $batch->assignments()->create($this->validated($request, $batch));
+        $data = $this->validated($request, $batch);
+
+        if ($request->hasFile('assignment_file')) {
+            $data['assignment_file'] = Media::store($request->file('assignment_file'), 'batch-assignment-files');
+        }
+
+        $batch->assignments()->create($data);
 
         return $this->toBatch($batch, 'assignments', 'Assignment added.');
     }
 
     public function update(Request $request, BatchAssignment $assignment): RedirectResponse
     {
-        $assignment->update($this->validated($request, $assignment->batch, $assignment));
+        $data = $this->validated($request, $assignment->batch, $assignment);
+
+        if ($request->hasFile('assignment_file')) {
+            Media::delete($assignment->assignment_file);
+            $data['assignment_file'] = Media::store($request->file('assignment_file'), 'batch-assignment-files');
+        }
+
+        $assignment->update($data);
 
         return $this->toBatch($assignment->batch_list_id, 'assignments', 'Assignment updated.');
     }
@@ -33,6 +47,8 @@ class BatchAssignmentController extends Controller
     public function destroy(BatchAssignment $assignment): RedirectResponse
     {
         $batchId = $assignment->batch_list_id;
+
+        Media::delete($assignment->assignment_file);
         $assignment->delete();
 
         return $this->toBatch($batchId, 'assignments', 'Assignment deleted.');
@@ -41,9 +57,11 @@ class BatchAssignmentController extends Controller
     private function validated(Request $request, Batch $batch, ?BatchAssignment $assignment = null): array
     {
         $data = $request->validate([
-            'course_module_items_id' => ['required', 'integer',
+            'course_module_items_id' => [
+                'required',
+                'integer',
                 Rule::exists('course_module_items', 'id')->where(
-                    fn ($q) => $q->where('item_type', ItemType::Assignment->value)->whereIn('course_modules_id', $this->moduleIds($batch))
+                    fn($q) => $q->where('item_type', ItemType::Assignment->value)->whereIn('course_modules_id', $this->moduleIds($batch))
                 ),
                 Rule::unique('batchwise_assignment', 'course_module_items_id')
                     ->where('batch_list_id', $batch->id)->whereNull('deleted_at')->ignore($assignment?->id),
@@ -53,14 +71,17 @@ class BatchAssignmentController extends Controller
             'assigned_at' => ['required', 'date'],
             'due_at' => ['required', 'date', 'after:assigned_at'],
             'total_marks' => ['required', 'integer', 'min:1', 'max:65535'],
+            'assignment_file' => ['nullable', 'file', 'mimes:pdf,doc,docx,zip', 'max:10240'],
             'status' => ['required', Rule::enum(AssignmentStatus::class)],
         ], [
             'course_module_items_id.exists' => 'Choose an assignment item of this batch\'s course.',
             'course_module_items_id.unique' => 'This assignment is already given in this batch.',
             'due_at.after' => 'The due date must be after the assigned date.',
+            'assignment_file.max' => 'The assignment file must not be larger than 10 MB.',
         ]);
 
         $data['allow_late'] = $request->boolean('allow_late');
+        unset($data['assignment_file']);
 
         return $data;
     }
