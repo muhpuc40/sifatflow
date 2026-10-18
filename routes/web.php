@@ -36,9 +36,9 @@ Route::middleware(['auth', EnsureAdminIsActive::class])->group(function () {
     Route::post('logout', [LoginController::class, 'destroy'])->name('admin.logout');
     Route::get('dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
     Route::get('server', [ServerController::class, 'index'])->name('admin.server.index');
-    // Courses, categories and the content / resource libraries
+
     require __DIR__ . '/admin-courses.php';
-    // Batches: classes, exams, assignments
     require __DIR__ . '/admin-batches.php';
+    require __DIR__ . '/admin-sales.php';
 
 });

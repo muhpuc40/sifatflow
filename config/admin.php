@@ -18,6 +18,8 @@ return [
 
         ['heading' => 'Sales'],
         ['label' => 'Orders', 'route' => 'admin.orders.index', 'icon' => 'credit-card', 'match' => 'admin.orders.*'],
+        ['label' => 'Combo offers', 'route' => 'admin.combos.index', 'icon' => 'percent', 'match' => 'admin.combos.*'],
+        ['label' => 'Vouchers', 'route' => 'admin.vouchers.index', 'icon' => 'gift', 'match' => 'admin.vouchers.*'],
 
         ['heading' => 'System'],
         ['label' => 'Server', 'route' => 'admin.server.index', 'icon' => 'monitor', 'match' => 'admin.server.*'],
