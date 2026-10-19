@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api;
 
 use App\Actions\RegisterDeviceAction;
 use App\Enums\AffiliateStatus;
-use App\Models\AffiliateSetting;
 use App\Enums\MessageChannel;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\LoginRequest;
@@ -13,6 +12,7 @@ use App\Http\Requests\Api\SendCodeRequest;
 use App\Http\Requests\Api\VerifyCodeRequest;
 use App\Models\Affiliate;
 use App\Models\AffiliateProfile;
+use App\Models\AffiliateSetting;
 use App\Models\Student;
 use App\Models\UserDevice;
 use App\Models\UserLoginInfo;
@@ -196,9 +196,7 @@ class AuthController extends Controller
         RegisterDeviceAction $devices
     ): JsonResponse {
         $challenge = $challenges->find($request->challenge_id, $type);
-        if (!$challenge) {
-            return $this->sessionExpired();
-        }
+        if (!$challenge) { return $this->sessionExpired(); }
         return DB::transaction(function () use ($request, $type, $challenges, $devices, $challenge) {
             if (!isset($challenge['signup'])) {
                 $model = Relation::getMorphedModel($type);
@@ -414,7 +412,9 @@ class AuthController extends Controller
             'verified_channel' => $challenge['channel'],
         ]);
 
-        $autoApprove = (bool) DB::table('affiliate_settings')->where('id', 1)->value('auto_approve');
+        $settings = AffiliateSetting::current();
+        // Program off -> always pending, no matter what auto_approve says.
+        $autoApprove = $settings->is_active && $settings->auto_approve;
 
         AffiliateProfile::create([
             'affiliate_id' => $affiliate->id,
@@ -434,7 +434,7 @@ class AuthController extends Controller
         $base = $base !== '' ? substr($base, 0, 10) : 'AFF';
 
         do {
-            $code = $base . random_int(100, 999);
+            $code = $base.random_int(100, 999);
         } while (AffiliateProfile::where('ref_code', $code)->exists());
 
         return $code;
