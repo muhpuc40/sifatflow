@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DeviceController;
 use App\Http\Controllers\Api\PasswordResetController;
 use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\ComboController;
 use App\Http\Controllers\Api\CourseController;
 use App\Http\Middleware\EnsureUserType;
 use App\Http\Middleware\LockApiLoginChallenge;
@@ -15,6 +16,8 @@ Route::prefix('v1')->middleware('throttle:120,1')->group(function () {
     Route::get('categories', [CategoryController::class, 'index']);
     Route::get('courses', [CourseController::class, 'index']);
     Route::get('courses/{course}', [CourseController::class, 'show'])->whereNumber('course');
+    Route::get('combos', [ComboController::class, 'index']);
+    Route::get('combos/{combo}', [ComboController::class, 'show'])->whereNumber('combo');
 });
 
 
