@@ -23,13 +23,18 @@ return [
             'driver' => 'eloquent',
             'model' => App\Models\Instructor::class
         ],
+        'affiliates' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Affiliate::class
+        ],
     ],
     'passwords' => [],
     'password_reset' => [
         'providers' => [
             'admin' => 'admins',
             'student' => 'students',
-            'instructor' => 'instructors'
+            'instructor' => 'instructors',
+            'affiliate' => 'affiliates'
         ],
         'challenge_ttl' => 600,
         'code_ttl' => 300,

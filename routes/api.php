@@ -18,11 +18,13 @@ Route::prefix('v1')->middleware('throttle:120,1')->group(function () {
 });
 
 
-// Student sign-up: 1. register  2. login/send-code  3. login/verify
-Route::post('v1/student/register', [AuthController::class, 'register'])->middleware('throttle:5,1');
+// Sign-up (student or affiliate): 1. register  2. login/send-code  3. login/verify
+Route::post('v1/{type}/register', [AuthController::class, 'register'])
+    ->where('type', 'student|affiliate')
+    ->middleware('throttle:5,1');
 
-// /api/v1/{admin|student|instructor}/
-Route::prefix('v1/{type}')->where(['type' => 'student|instructor'])->group(function () {
+// /api/v1/{admin|student|instructor|affiliate}/
+Route::prefix('v1/{type}')->where(['type' => 'student|instructor|affiliate'])->group(function () {
 
     // Login: 1. password  2. send code  3. verify code
     Route::post('login', [AuthController::class, 'login'])->middleware('throttle:login');

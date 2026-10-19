@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\Admin;
+use App\Models\Affiliate;
 use App\Models\Instructor;
 use App\Models\Student;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -20,12 +21,13 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        // Stored in the database as: admin | student | instructor
+        // Stored in the database as: admin | student | instructor | affiliate
         // (user_devices.user_type, user_login_infos.user_type, personal_access_tokens.tokenable_type)
         Relation::enforceMorphMap([
             'admin' => Admin::class,
             'student' => Student::class,
             'instructor' => Instructor::class,
+            'affiliate' => Affiliate::class,
         ]);
 
         // Step 1: password attempts

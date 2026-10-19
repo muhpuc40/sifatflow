@@ -12,10 +12,11 @@
 --}}
 @props(['show' => 'open', 'close' => 'open = false', 'title' => "''", 'maxWidth' => 'max-w-lg'])
 <div x-show="{{ $show }}" x-cloak
+     x-effect="document.body.classList.toggle('overflow-hidden', {{ $show }})"
      @keydown.escape.window="{{ $close }}"
      class="fixed inset-0 z-[60] overflow-y-auto" role="dialog" aria-modal="true">
     <div class="flex min-h-full items-start justify-center p-4 sm:items-center">
-        <div x-show="{{ $show }}" x-transition.opacity @click="{{ $close }}" class="fixed inset-0 bg-slate-900/50"></div>
+        <div x-show="{{ $show }}" x-transition.opacity class="fixed inset-0 bg-slate-900/50"></div>
 
         <div x-show="{{ $show }}" x-transition.scale.95
              class="relative my-8 w-full {{ $maxWidth }} rounded-2xl bg-white shadow-xl">

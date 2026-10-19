@@ -1,4 +1,3 @@
-{{-- Menu comes from config/admin.php. Items whose route does not exist yet are skipped. --}}
 @php
     $items = [];
     $pendingHeading = null;
@@ -41,7 +40,10 @@
         </button>
     </div>
 
-    <nav class="flex-1 space-y-1 overflow-y-auto px-3 py-4">
+    <nav x-data x-init="
+            $el.scrollTop = sessionStorage.getItem('sidebarScroll') || 0;
+            $el.addEventListener('scroll', () => sessionStorage.setItem('sidebarScroll', $el.scrollTop));
+        " class="sidebar-nav flex-1 space-y-1 overflow-y-auto px-3 py-4">
         @foreach ($items as $item)
             @if (isset($item['heading']))
                 <p class="px-3 pb-1 pt-4 text-xs font-semibold uppercase tracking-wider text-slate-500">{{ $item['heading'] }}

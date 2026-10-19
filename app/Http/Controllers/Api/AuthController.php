@@ -3,12 +3,16 @@
 namespace App\Http\Controllers\Api;
 
 use App\Actions\RegisterDeviceAction;
+use App\Enums\AffiliateStatus;
+use App\Models\AffiliateSetting;
 use App\Enums\MessageChannel;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\LoginRequest;
 use App\Http\Requests\Api\RegisterRequest;
 use App\Http\Requests\Api\SendCodeRequest;
 use App\Http\Requests\Api\VerifyCodeRequest;
+use App\Models\Affiliate;
+use App\Models\AffiliateProfile;
 use App\Models\Student;
 use App\Models\UserDevice;
 use App\Models\UserLoginInfo;
@@ -26,15 +30,15 @@ use Throwable;
 
 /**
  * Login:    1. login     2. send-code     3. verify
- * Sign-up:  1. register  2. send-code     3. verify   (students only, account is created in step 3)
+ * Sign-up:  1. register  2. send-code     3. verify   (student or affiliate; account is created in step 3)
  */
 class AuthController extends Controller
 {
     // ------------------------------------------------------- sign-up, step 1
-    public function register(RegisterRequest $request, LoginChallengeService $challenges): JsonResponse
+    public function register(RegisterRequest $request, string $type, LoginChallengeService $challenges): JsonResponse
     {
         $challengeId = $challenges->start(
-            'student',
+            $type,
             null,
             $request->only(['device_id', 'device_name', 'platform', 'browser']),
             null,
@@ -192,7 +196,9 @@ class AuthController extends Controller
         RegisterDeviceAction $devices
     ): JsonResponse {
         $challenge = $challenges->find($request->challenge_id, $type);
-        if (!$challenge) { return $this->sessionExpired(); }
+        if (!$challenge) {
+            return $this->sessionExpired();
+        }
         return DB::transaction(function () use ($request, $type, $challenges, $devices, $challenge) {
             if (!isset($challenge['signup'])) {
                 $model = Relation::getMorphedModel($type);
@@ -217,7 +223,7 @@ class AuthController extends Controller
 
         $isSignup = isset($challenge['signup']);
 
-        /** @var \App\Models\Admin|Student|\App\Models\Instructor|null $user */
+        /** @var \App\Models\Admin|Student|\App\Models\Instructor|Affiliate|null $user */
         $user = $isSignup ? null : $this->findUser($type, $challenge['user_id']);
 
         if (!$isSignup && (!$user || !$user->isActive())) {
@@ -241,7 +247,10 @@ class AuthController extends Controller
 
         // Sign-up: the code is correct, now the account is created
         if ($isSignup) {
-            $user = $this->createStudent($challenge);
+            $user = match ($type) {
+                'affiliate' => $this->createAffiliate($challenge),
+                default => $this->createStudent($challenge),
+            };
 
             if (!$user) {
                 $challenges->forget($request->challenge_id);
@@ -376,7 +385,62 @@ class AuthController extends Controller
         ]);
     }
 
-    /** @return \App\Models\Admin|Student|\App\Models\Instructor|null */
+    /**
+     * Creates the affiliate after the code is verified. Also creates the affiliate_profiles row
+     * (status = pending, unless affiliate_settings.auto_approve is on) with a unique ref code.
+     * Returns null if the email or phone was taken meanwhile.
+     */
+    private function createAffiliate(array $challenge): ?Affiliate
+    {
+        $data = $challenge['signup'];
+
+        $taken = Affiliate::withTrashed()
+            ->where('email', $data['email'])
+            ->orWhere('phone', $data['phone'])
+            ->exists();
+
+        if ($taken) {
+            return null;
+        }
+
+        $affiliate = Affiliate::forceCreate([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'phone' => $data['phone'],
+            'password' => $data['password'],   // already hashed
+            'status' => 'active',
+            // Record the channel actually verified during registration.
+            'verified_at' => now(),
+            'verified_channel' => $challenge['channel'],
+        ]);
+
+        $autoApprove = (bool) DB::table('affiliate_settings')->where('id', 1)->value('auto_approve');
+
+        AffiliateProfile::create([
+            'affiliate_id' => $affiliate->id,
+            'ref_code' => $this->uniqueRefCode($data['name']),
+            'status' => $autoApprove ? AffiliateStatus::Approved : AffiliateStatus::Pending,
+            'approved_at' => $autoApprove ? now() : null,
+        ]);
+
+        return $affiliate;
+    }
+
+    /** First word of the name + a random 3-digit suffix, e.g. "RAHIM482". The affiliate can change it later. */
+    private function uniqueRefCode(string $name): string
+    {
+        $firstWord = trim(explode(' ', trim($name))[0] ?? '');
+        $base = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $firstWord) ?: '');
+        $base = $base !== '' ? substr($base, 0, 10) : 'AFF';
+
+        do {
+            $code = $base . random_int(100, 999);
+        } while (AffiliateProfile::where('ref_code', $code)->exists());
+
+        return $code;
+    }
+
+    /** @return \App\Models\Admin|Student|\App\Models\Instructor|Affiliate|null */
     private function findUser(string $type, int $id)
     {
         $model = Relation::getMorphedModel($type);

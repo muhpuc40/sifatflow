@@ -14,3 +14,22 @@
 [x-cloak] {
     display: none !important;
 }
+
+/* Sidebar scrollbar: thin, dark, matches the slate-900 sidebar */
+.sidebar-nav {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-slate-600) transparent;
+}
+.sidebar-nav::-webkit-scrollbar {
+    width: 6px;
+}
+.sidebar-nav::-webkit-scrollbar-track {
+    background: transparent;
+}
+.sidebar-nav::-webkit-scrollbar-thumb {
+    background-color: var(--color-slate-600);
+    border-radius: 9999px;
+}
+.sidebar-nav::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-slate-500);
+}

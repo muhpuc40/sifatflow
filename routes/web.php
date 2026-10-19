@@ -40,5 +40,6 @@ Route::middleware(['auth', EnsureAdminIsActive::class])->group(function () {
     require __DIR__ . '/admin-courses.php';
     require __DIR__ . '/admin-batches.php';
     require __DIR__ . '/admin-sales.php';
+    require __DIR__ . '/admin-affiliate.php';
 
 });

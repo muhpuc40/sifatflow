@@ -9,7 +9,7 @@ class UserTypeDeviceLimitSeeder extends Seeder
 {
     public function run(): void
     {
-        foreach (['student' => 2, 'instructor' => 2, 'admin' => 3] as $type => $max) {
+        foreach (['student' => 2, 'instructor' => 2, 'admin' => 3, 'affiliate' => 2] as $type => $max) {
             UserTypeDeviceLimit::firstOrCreate(['user_type' => $type], ['max_devices' => $max]);
         }
     }
