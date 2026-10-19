@@ -72,6 +72,7 @@ combo) --}}
 
     <div>
         <x-admin.card title="Price preview" class="sticky top-18">
+            <div x-data="{ thumbnailPreview: @js($combo->thumbnail_url) }">
             <dl class="space-y-2 text-sm">
                 <div class="flex justify-between text-slate-600">
                     <dt>Courses picked</dt>
@@ -90,6 +91,20 @@ combo) --}}
                     <dd x-text="'Tk ' + final.toLocaleString()"></dd>
                 </div>
             </dl>
+
+            <div class="mt-5 border-t border-slate-100 pt-4">
+                <label for="thumbnail" class="block text-sm font-medium text-slate-700">Thumbnail (optional)</label>
+                <input id="thumbnail" name="thumbnail" type="file" accept="image/*"
+                    @change="thumbnailPreview = $event.target.files[0] ? URL.createObjectURL($event.target.files[0]) : thumbnailPreview"
+                    class="mt-2 block w-full text-sm text-slate-600 file:mr-3 file:rounded-md file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:text-sm file:font-medium file:text-slate-700 hover:file:bg-slate-200">
+                @error('thumbnail')
+                    <p class="mt-1.5 text-xs text-red-600">{{ $message }}</p>
+                @enderror
+                <template x-if="thumbnailPreview">
+                    <img :src="thumbnailPreview" alt="Combo thumbnail preview" class="mt-3 h-28 w-full rounded-lg object-cover ring-1 ring-slate-200">
+                </template>
+            </div>
+
             <p class="mt-3 text-xs text-amber-600"
                 x-show="form.price_type === 'flat' && sum > 0 && Number(form.price_value || 0) > sum">
                 The combo price is higher than the courses' total, so the full price
@@ -100,6 +115,7 @@ combo) --}}
             <div class="mt-5 flex justify-end gap-2 border-t border-slate-100 pt-4">
                 <x-admin.button :href="route('admin.combos.index')" variant="secondary">Cancel</x-admin.button>
                 <x-admin.button type="submit">Save</x-admin.button>
+            </div>
             </div>
         </x-admin.card>
     </div>

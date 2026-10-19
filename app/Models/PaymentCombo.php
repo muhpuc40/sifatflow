@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use App\Support\Media;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -37,6 +39,12 @@ class PaymentCombo extends Model
         ];
     }
 
+    /** Link of the uploaded combo thumbnail (or null). */
+    protected function thumbnailUrl(): Attribute
+    {
+        return Attribute::get(fn() => Media::url($this->thumbnail));
+    }
+
     public function courses(): BelongsToMany
     {
         return $this->belongsToMany(Course::class, 'payment_combo_courses', 'payment_combo_id', 'course_list_id')
@@ -55,7 +63,7 @@ class PaymentCombo extends Model
 
         return $query->where('is_active', true)
             ->where('ends_at', '>=', $now)
-            ->where(fn (Builder $q) => $q->whereNull('starts_at')->orWhere('starts_at', '<=', $now));
+            ->where(fn(Builder $q) => $q->whereNull('starts_at')->orWhere('starts_at', '<=', $now));
     }
 
     public function isExpired(): bool
@@ -66,7 +74,7 @@ class PaymentCombo extends Model
     /** Sum of the courses' current price (after each course's own discount). Needs courses.currentPrice loaded. */
     public function coursesTotal(): float
     {
-        return round($this->courses->sum(fn (Course $c) => (float) $c->currentPrice?->finalPrice()), 2);
+        return round($this->courses->sum(fn(Course $c) => (float) $c->currentPrice?->finalPrice()), 2);
     }
 
     /** What the student pays for the whole combo. Never more than the sum of the courses (never raises the price). */

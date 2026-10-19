@@ -26,7 +26,7 @@
             </x-admin.button>
         </x-admin.page-header>
 
-        <form method="POST" action="{{ route('admin.combos.store') }}">
+        <form method="POST" enctype="multipart/form-data" action="{{ route('admin.combos.store') }}">
             @csrf
             @include('admin.combos._form', ['combo' => $combo, 'courses' => $courses, 'selected' => $selected])
         </form>

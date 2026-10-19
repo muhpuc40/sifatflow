@@ -19,6 +19,7 @@ class PaymentComboRequest extends FormRequest
         return [
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:2000'],
+            'thumbnail' => ['nullable', 'image', 'max:2048'],
             'price_type' => ['required', Rule::enum(AmountType::class)],
             'price_value' => ['required', 'numeric', 'min:0', 'max:9999999'],
             'starts_at' => ['nullable', 'date'],

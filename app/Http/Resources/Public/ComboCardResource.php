@@ -14,8 +14,9 @@ class ComboCardResource extends JsonResource
             'id' => $this->id,
             'title' => $this->title,
             'description' => $this->description,
+            'thumbnail' => $this->thumbnail_url,
             'course_count' => $this->courses->count(),
-            'courses' => $this->courses->map(fn ($c) => [
+            'courses' => $this->courses->map(fn($c) => [
                 'id' => $c->id,
                 'title' => $c->title,
                 'thumbnail' => $c->thumbnail_url,

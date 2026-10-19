@@ -10,7 +10,7 @@
                 is_active: @js((bool) old('is_active', $combo->is_active)),
                 course_ids: @js(old('course_ids', $selected)),
             },
-            courses: @js($courses->map(fn ($c) => ['id' => $c->id, 'title' => $c->title, 'price' => (float) ($c->currentPrice?->finalPrice() ?? 0)])->values()),
+            courses: @js($courses->map(fn($c) => ['id' => $c->id, 'title' => $c->title, 'price' => (float) ($c->currentPrice?->finalPrice() ?? 0)])->values()),
             get selectedCourses() { return this.courses.filter(c => this.form.course_ids.includes(c.id)) },
             get sum() { return this.selectedCourses.reduce((s, c) => s + c.price, 0) },
             get final() {
@@ -26,7 +26,7 @@
             </x-admin.button>
         </x-admin.page-header>
 
-        <form method="POST" action="{{ route('admin.combos.update', $combo) }}">
+        <form method="POST" enctype="multipart/form-data" action="{{ route('admin.combos.update', $combo) }}">
             @csrf
             @method('PUT')
             @include('admin.combos._form', ['combo' => $combo, 'courses' => $courses, 'selected' => $selected])

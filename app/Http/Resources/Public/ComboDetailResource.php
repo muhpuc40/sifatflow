@@ -14,6 +14,7 @@ class ComboDetailResource extends JsonResource
             'id' => $this->id,
             'title' => $this->title,
             'description' => $this->description,
+            'thumbnail' => $this->thumbnail_url,
             // Each course as its own card (category, its own price, next open batch) so the
             // combo page can show what's inside without a second round of requests.
             'courses' => CourseCardResource::collection($this->courses)->resolve(),

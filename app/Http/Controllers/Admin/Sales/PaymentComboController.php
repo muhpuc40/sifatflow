@@ -9,6 +9,7 @@ use App\Models\PaymentCombo;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Support\Media;
 use Illuminate\View\View;
 
 class PaymentComboController extends Controller
@@ -21,10 +22,10 @@ class PaymentComboController extends Controller
         $combos = PaymentCombo::query()
             ->with(['courses.currentPrice'])
             ->withCount('courses')
-            ->when($request->filled('q'), fn ($q) => $q->where('title', 'like', '%'.$request->input('q').'%'))
-            ->when($filter === 'active', fn ($q) => $q->active())
-            ->when($filter === 'inactive', fn ($q) => $q->where('is_active', false))
-            ->when($filter === 'expired', fn ($q) => $q->where('ends_at', '<', now()))
+            ->when($request->filled('q'), fn($q) => $q->where('title', 'like', '%' . $request->input('q') . '%'))
+            ->when($filter === 'active', fn($q) => $q->active())
+            ->when($filter === 'inactive', fn($q) => $q->where('is_active', false))
+            ->when($filter === 'expired', fn($q) => $q->where('ends_at', '<', now()))
             ->latest('id')
             ->paginate(10)
             ->withQueryString();
@@ -45,9 +46,13 @@ class PaymentComboController extends Controller
     /** POST /combos */
     public function store(PaymentComboRequest $request): RedirectResponse
     {
-        $data = $request->safe()->except('course_ids');
+        $data = $request->safe()->except(['course_ids', 'thumbnail']);
         $data['is_active'] = $request->boolean('is_active');
         $data['created_by'] = $request->user()->id;
+
+        if ($request->hasFile('thumbnail')) {
+            $data['thumbnail'] = Media::store($request->file('thumbnail'), 'combo-thumbnails');
+        }
 
         $combo = PaymentCombo::create($data);
         $combo->courses()->sync($request->input('course_ids'));
@@ -68,8 +73,13 @@ class PaymentComboController extends Controller
     /** PUT /combos/{combo} */
     public function update(PaymentComboRequest $request, PaymentCombo $combo): RedirectResponse
     {
-        $data = $request->safe()->except('course_ids');
+        $data = $request->safe()->except(['course_ids', 'thumbnail']);
         $data['is_active'] = $request->boolean('is_active');
+
+        if ($request->hasFile('thumbnail')) {
+            Media::delete($combo->thumbnail);
+            $data['thumbnail'] = Media::store($request->file('thumbnail'), 'combo-thumbnails');
+        }
 
         $combo->update($data);
         $combo->courses()->sync($request->input('course_ids'));
@@ -84,6 +94,7 @@ class PaymentComboController extends Controller
             return back()->with('error', 'This combo was used in an order and cannot be deleted. Turn it off instead.');
         }
 
+        Media::delete($combo->thumbnail);
         $combo->delete();
 
         return back()->with('success', 'Combo offer deleted.');
