@@ -2,8 +2,6 @@
     <div x-data="{ open: false, mode: 'add', action: '', form: {} }" @keydown.escape.window="open = false">
         <x-admin.page-header title="Course categories"
             description="Group courses, for example Web Development or Design.">
-            <x-admin.button :href="route('admin.courses.index')" variant="secondary"><x-admin.icon name="arrow-left"
-                    class="size-4" /> Courses</x-admin.button>
             <x-admin.button type="button"
                 @click="mode = 'add'; action = '{{ route('admin.categories.store') }}'; form = { name: '', slug: '', icon: '', description: '' }; open = true">
                 <x-admin.icon name="plus" class="size-4" /> Add category

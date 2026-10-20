@@ -1,7 +1,6 @@
 <x-admin.layout title="Upload content">
     <div x-data="{ open: false, mode: 'add', action: '{{ route('admin.library.content.store') }}', form: { name: '', url: '' } }">
         <x-admin.page-header title="Content library" description="Videos and files that classes, exams and assignments show. One content can be reused in many items.">
-            <x-admin.button :href="route('admin.courses.index')" variant="secondary"><x-admin.icon name="arrow-left" class="size-4" /> Courses</x-admin.button>
             <x-admin.button type="button" @click="mode = 'add'; action = '{{ route('admin.library.content.store') }}'; form = { name: '', url: '' }; open = true">
                 <x-admin.icon name="upload" class="size-4" /> Upload content
             </x-admin.button>

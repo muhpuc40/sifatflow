@@ -3,8 +3,6 @@
         x-data="{ open: false, mode: 'add', action: '{{ route('admin.library.resources.store') }}', form: { name: '', url: '' } }">
         <x-admin.page-header title="Resource library"
             description="Slides, PDFs and other files students can use. One resource can be reused in many items.">
-            <x-admin.button :href="route('admin.courses.index')" variant="secondary"><x-admin.icon name="arrow-left"
-                    class="size-4" /> Courses</x-admin.button>
             <x-admin.button type="button"
                 @click="mode = 'add'; action = '{{ route('admin.library.resources.store') }}'; form = { name: '', url: '' }; open = true">
                 <x-admin.icon name="upload" class="size-4" /> Upload resource
