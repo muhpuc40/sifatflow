@@ -21,11 +21,15 @@ return [
         ['label' => 'Combo offers', 'route' => 'admin.combos.index', 'icon' => 'percent', 'match' => 'admin.combos.*'],
         ['label' => 'Vouchers', 'route' => 'admin.vouchers.index', 'icon' => 'gift', 'match' => 'admin.vouchers.*'],
 
+        ['heading' => 'Communication'],
+        ['label' => 'Email composer', 'route' => 'admin.communication.email.create', 'icon' => 'mail', 'match' => 'admin.communication.email.*'],
+
         ['heading' => 'Affiliate'],
         ['label' => 'Settings', 'route' => 'admin.affiliate-settings.edit', 'icon' => 'link', 'match' => 'admin.affiliate-settings.*'],
 
         ['heading' => 'System'],
         ['label' => 'Server', 'route' => 'admin.server.index', 'icon' => 'monitor', 'match' => 'admin.server.*'],
+        ['label' => 'Logs', 'route' => 'admin.logs.index', 'icon' => 'file', 'match' => 'admin.logs.*'],
         ['label' => 'Settings', 'route' => 'admin.settings.index', 'icon' => 'sliders', 'match' => 'admin.settings.*'],
     ],
 

@@ -8,20 +8,7 @@
 @endphp
 
 <x-admin.layout title="Server">
-    <div x-data="{
-            auto: false, timer: null,
-            toggle() {
-                this.auto = ! this.auto;
-                clearInterval(this.timer);
-                if (this.auto) { this.timer = setInterval(() => location.reload(), 10000); }
-            }
-         }">
-
-        <x-admin.page-header title="Server" description="Live information about the machine that runs SifatFlow. Updated at {{ now()->format('h:i:s A') }}.">
-            <x-admin.button type="button" variant="secondary" @click="toggle()">
-                <x-admin.icon name="clock" class="size-4" />
-                <span x-text="auto ? 'Auto refresh: ON (10s)' : 'Auto refresh: OFF'"></span>
-            </x-admin.button>
+        <x-admin.page-header title="Server Status" description="Live information about the machine that runs {{ config('app.name') }}. Updated at {{ now()->format('h:i:s A') }}.">
             <x-admin.button :href="route('admin.server.index')">
                 <x-admin.icon name="activity" class="size-4" /> Refresh
             </x-admin.button>
@@ -113,5 +100,5 @@
                 </div>
             </x-admin.card>
         </div>
-    </div>
+  
 </x-admin.layout>

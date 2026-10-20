@@ -5,6 +5,9 @@ use Monolog\Handler\StreamHandler;
 use Monolog\Handler\SyslogUdpHandler;
 use Monolog\Processor\PsrLogMessageProcessor;
 
+$appLogName = preg_replace('/[^A-Za-z0-9._-]+/', '-', (string) env('APP_NAME', 'Laravel'));
+$appLogName = trim($appLogName, '.-') ?: 'Laravel';
+
 return [
 
     /*
@@ -61,6 +64,14 @@ return [
         'single' => [
             'driver' => 'single',
             'path' => storage_path('logs/laravel.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'replace_placeholders' => true,
+        ],
+
+        // Application-specific log, for example storage/logs/Creative-S.log.
+        'app_file' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/'.$appLogName.'.log'),
             'level' => env('LOG_LEVEL', 'debug'),
             'replace_placeholders' => true,
         ],

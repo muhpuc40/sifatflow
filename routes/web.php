@@ -5,7 +5,6 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Middleware\EnsureAdminIsActive;
 use App\Http\Middleware\LockAdminLoginChallenge;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Admin\ServerController;
 
 Route::middleware('guest')->group(function () {
     // Admin login: 1. password  2. send code  3. verify code
@@ -35,11 +34,12 @@ Route::middleware(['auth', EnsureAdminIsActive::class])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
     Route::post('logout', [LoginController::class, 'destroy'])->name('admin.logout');
     Route::get('dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
-    Route::get('server', [ServerController::class, 'index'])->name('admin.server.index');
 
     require __DIR__ . '/admin-courses.php';
     require __DIR__ . '/admin-batches.php';
     require __DIR__ . '/admin-sales.php';
     require __DIR__ . '/admin-affiliate.php';
+    require __DIR__ . '/admin-communication.php';
+    require __DIR__ . '/admin-system.php';
 
 });
