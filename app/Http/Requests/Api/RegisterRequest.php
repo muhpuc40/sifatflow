@@ -34,6 +34,9 @@ class RegisterRequest extends FormRequest
             'device_name' => ['nullable', 'string', 'max:255'],
             'platform' => ['nullable', 'string', 'max:50'],
             'browser' => ['nullable', 'string', 'max:50'],
+            // The visitor_token returned by POST /ref/{ref_code}/click, if this signup came through
+            // an affiliate link. Student-only in practice (see AttributionService::attributeOnRegister).
+            'visitor_token' => ['nullable', 'string', 'max:64'],
         ];
     }
 

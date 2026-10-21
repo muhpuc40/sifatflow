@@ -16,6 +16,7 @@ use App\Models\AffiliateSetting;
 use App\Models\Student;
 use App\Models\UserDevice;
 use App\Models\UserLoginInfo;
+use App\Services\Affiliate\AttributionService;
 use App\Services\Auth\LoginChallengeService;
 use App\Services\Messaging\MessageService;
 use App\Support\Mask;
@@ -47,6 +48,7 @@ class AuthController extends Controller
                 'email' => $request->email,
                 'phone' => $request->phone,
                 'password' => Hash::make($request->password),   // never stored as plain text
+                'visitor_token' => $request->input('visitor_token'),
             ]
         );
 
@@ -193,17 +195,18 @@ class AuthController extends Controller
         VerifyCodeRequest $request,
         string $type,
         LoginChallengeService $challenges,
-        RegisterDeviceAction $devices
+        RegisterDeviceAction $devices,
+        AttributionService $attribution
     ): JsonResponse {
         $challenge = $challenges->find($request->challenge_id, $type);
         if (!$challenge) { return $this->sessionExpired(); }
-        return DB::transaction(function () use ($request, $type, $challenges, $devices, $challenge) {
+        return DB::transaction(function () use ($request, $type, $challenges, $devices, $challenge, $attribution) {
             if (!isset($challenge['signup'])) {
                 $model = Relation::getMorphedModel($type);
                 $model::whereKey($challenge['user_id'])->lockForUpdate()->first();
             }
             // Recheck the password fingerprint after taking the same account lock used by reset.
-            return $this->verifyLocked($request, $type, $challenges, $devices);
+            return $this->verifyLocked($request, $type, $challenges, $devices, $attribution);
         });
     }
 
@@ -211,7 +214,8 @@ class AuthController extends Controller
         VerifyCodeRequest $request,
         string $type,
         LoginChallengeService $challenges,
-        RegisterDeviceAction $devices
+        RegisterDeviceAction $devices,
+        AttributionService $attribution
     ): JsonResponse {
         $challenge = $challenges->find($request->challenge_id, $type);
 
@@ -254,6 +258,11 @@ class AuthController extends Controller
                 $challenges->forget($request->challenge_id);
 
                 return response()->json(['message' => 'This email or phone number is already registered.'], 422);
+            }
+
+            // Attribution is for students only - an affiliate signing up has no "referring affiliate".
+            if ($type !== 'affiliate') {
+                $attribution->attributeOnRegister($user, $challenge['signup']['visitor_token'] ?? null);
             }
         }
 

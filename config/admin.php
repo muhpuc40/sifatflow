@@ -26,6 +26,7 @@ return [
         ['label' => 'Email composer', 'route' => 'admin.communication.email.create', 'icon' => 'mail', 'match' => 'admin.communication.email.*'],
 
         ['heading' => 'Affiliate'],
+        ['label' => 'Affiliates', 'route' => 'admin.affiliates.index', 'icon' => 'users', 'match' => 'admin.affiliates.*'],
         ['label' => 'Settings', 'route' => 'admin.affiliate-settings.edit', 'icon' => 'link', 'match' => 'admin.affiliate-settings.*'],
 
         ['heading' => 'System'],
