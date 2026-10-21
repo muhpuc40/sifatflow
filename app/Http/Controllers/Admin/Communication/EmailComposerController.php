@@ -60,7 +60,7 @@ class EmailComposerController extends Controller
             ->all();
 
         $recipients = collect([...$userEmails, ...$request->customEmails()])
-            ->map(fn ($email) => strtolower(trim($email)))
+            ->map(fn($email) => strtolower(trim($email)))
             ->filter()
             ->unique()
             ->values();
@@ -78,7 +78,7 @@ class EmailComposerController extends Controller
         $adminId = $request->user()?->id;
         $recipientType = $data['recipient_type'];
 
-        $jobs = $recipients->map(fn (string $email) => new SendComposedEmail(
+        $jobs = $recipients->map(fn(string $email) => new SendComposedEmail(
             email: $email,
             subject: $subject,
             body: $body,
@@ -91,14 +91,13 @@ class EmailComposerController extends Controller
 
         try {
             Bus::batch($jobs)
-                ->name('SifatFlow email: '.$subject)
+                ->name('SifatFlow email: ' . $subject)
                 ->finally(function (Batch $batch) use ($attachmentPath, $adminId, $subject, $recipients, $recipientType, $attachmentName) {
                     if ($attachmentPath) {
                         Storage::disk('local')->delete($attachmentPath);
                     }
 
-                    Log::channel('app_file')->info('Admin email batch finished', [
-                        'batch_id' => $batch->id,
+                    Log::channel('app_file')->info('Email batch finished', [
                         'admin_id' => $adminId,
                         'recipient_type' => $recipientType,
                         'subject' => $subject,
@@ -114,7 +113,7 @@ class EmailComposerController extends Controller
                 Storage::disk('local')->delete($attachmentPath);
             }
 
-            Log::channel('app_file')->error('Admin email batch could not be queued', [
+            Log::channel('app_file')->error('Email batch could not be queued', [
                 'admin_id' => $adminId,
                 'recipient_type' => $recipientType,
                 'subject' => $subject,
@@ -126,7 +125,7 @@ class EmailComposerController extends Controller
             return back()->withInput()->with('error', 'The email could not be queued. Check your queue configuration.');
         }
 
-        Log::info('Admin email batch queued', [
+        Log::channel('app_file')->info('Email batch queued', [
             'admin_id' => $adminId,
             'recipient_type' => $recipientType,
             'subject' => $subject,
@@ -134,7 +133,7 @@ class EmailComposerController extends Controller
             'total' => $recipients->count(),
             'attachment' => $attachmentName,
         ]);
-        Log::channel('app_file')->info('Admin email batch queued', [
+        Log::channel('app_file')->info('Email batch queued', [
             'admin_id' => $adminId,
             'recipient_type' => $recipientType,
             'subject' => $subject,

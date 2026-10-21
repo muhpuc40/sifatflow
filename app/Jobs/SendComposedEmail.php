@@ -55,7 +55,7 @@ class SendComposedEmail implements ShouldQueue
             }
         });
 
-        Log::channel('app_file')->info('Admin email delivered', [
+        Log::channel('app_file')->info('Email delivered', [
             'admin_id' => $this->adminId,
             'recipient_type' => $this->recipientType,
             'subject' => $this->subject,
@@ -66,7 +66,7 @@ class SendComposedEmail implements ShouldQueue
 
     public function failed(Throwable $exception): void
     {
-        Log::channel('app_file')->error('Admin email failed', [
+        Log::channel('app_file')->error('Email failed', [
             'admin_id' => $this->adminId,
             'recipient_type' => $this->recipientType,
             'subject' => $this->subject,

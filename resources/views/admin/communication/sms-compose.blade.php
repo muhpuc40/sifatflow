@@ -31,7 +31,7 @@
          }">
 
         <x-admin.page-header title="SMS composer"
-            description="Send a plain text SMS to selected students, instructors, affiliates, or custom numbers." />
+            description="Send a plain text SMS to selected students, instructors, affiliates or custom numbers." />
 
         <form method="POST" action="{{ route('admin.communication.sms.send') }}" class="space-y-6"
               @submit.prevent="confirmOpen = true">

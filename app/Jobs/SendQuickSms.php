@@ -42,7 +42,7 @@ class SendQuickSms implements ShouldQueue
 
         $sent = $sms->sendBulk($this->numbers, $this->message);
 
-        Log::channel('app_file')->info('Admin quick SMS chunk delivered', [
+        Log::channel('app_file')->info('SMS chunk delivered', [
             'admin_id' => $this->adminId,
             'recipient_type' => $this->recipientType,
             'numbers' => count($this->numbers),
@@ -52,7 +52,7 @@ class SendQuickSms implements ShouldQueue
 
     public function failed(Throwable $exception): void
     {
-        Log::channel('app_file')->error('Admin quick SMS chunk failed', [
+        Log::channel('app_file')->error('SMS chunk failed', [
             'admin_id' => $this->adminId,
             'recipient_type' => $this->recipientType,
             'numbers' => count($this->numbers),

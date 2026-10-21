@@ -73,8 +73,7 @@ class SmsComposerController extends Controller
             Bus::batch($jobs)
                 ->name('SifatFlow quick SMS: ' . $recipientType)
                 ->finally(function (Batch $batch) use ($adminId, $recipientType, $numbers, $message) {
-                    Log::channel('app_file')->info('Admin quick SMS batch finished', [
-                        'batch_id' => $batch->id,
+                    Log::channel('app_file')->info('SMS batch finished', [
                         'admin_id' => $adminId,
                         'recipient_type' => $recipientType,
                         'total_numbers' => $numbers->count(),
@@ -84,7 +83,7 @@ class SmsComposerController extends Controller
                 })
                 ->dispatch();
         } catch (Throwable $exception) {
-            Log::channel('app_file')->error('Admin quick SMS batch could not be queued', [
+            Log::channel('app_file')->error('SMS batch could not be queued', [
                 'admin_id' => $adminId,
                 'recipient_type' => $recipientType,
                 'total_numbers' => $numbers->count(),
@@ -94,7 +93,7 @@ class SmsComposerController extends Controller
             return back()->withInput()->with('error', 'The SMS could not be queued. Check your queue configuration.');
         }
 
-        Log::channel('app_file')->info('Admin quick SMS batch queued', [
+        Log::channel('app_file')->info('SMS batch queued', [
             'admin_id' => $adminId,
             'recipient_type' => $recipientType,
             'total_numbers' => $numbers->count(),
