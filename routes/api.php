@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AffiliateClickController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DeviceController;
 use App\Http\Controllers\Api\PasswordResetController;
@@ -18,6 +19,8 @@ Route::prefix('v1')->middleware('throttle:120,1')->group(function () {
     Route::get('courses/{course}', [CourseController::class, 'show'])->whereNumber('course');
     Route::get('combos', [ComboController::class, 'index']);
     Route::get('combos/{combo}', [ComboController::class, 'show'])->whereNumber('combo');
+    Route::post('ref/{ref_code}/click', [AffiliateClickController::class, 'click']);
+    Route::get('ref/attribution', [AffiliateClickController::class, 'attribution']);
 });
 
 
