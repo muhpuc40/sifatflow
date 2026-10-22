@@ -31,8 +31,6 @@
             @if ($combos->isEmpty())
                 <x-admin.empty-state icon="percent" :title="request()->hasAny(['q', 'status']) ? 'No combo matches your filter' : 'No combo offers yet'"
                     message="Bundle a few courses together and give them one price or a percent off.">
-                    <x-admin.button :href="route('admin.combos.create')"><x-admin.icon name="plus" class="size-4" /> New
-                        combo</x-admin.button>
                 </x-admin.empty-state>
             @else
                 <x-admin.table>

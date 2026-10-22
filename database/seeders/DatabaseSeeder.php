@@ -8,7 +8,6 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // Needed in every environment
         $this->call(UserTypeDeviceLimitSeeder::class);
 
 
@@ -16,10 +15,6 @@ class DatabaseSeeder extends Seeder
             $this->call(DemoUsersSeeder::class);
             $this->call(CourseDemoSeeder::class);
             $this->call(BatchDemoSeeder::class);
-
-
-
-
         }
     }
 }

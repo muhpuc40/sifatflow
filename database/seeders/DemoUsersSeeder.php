@@ -27,35 +27,89 @@ class DemoUsersSeeder extends Seeder
             $verified = ['password' => $password, 'verified_at' => now(), 'verified_channel' => 'email'];
 
             Admin::firstOrCreate(['email' => 'admin@sifatflow.com'], $verified + [
-                'name' => 'Super Admin', 'phone' => '01700000000', 'status' => 'active',
+                'name' => 'Super Admin',
+                'phone' => '01700000000',
+                'status' => 'active',
             ]);
-
+            Admin::firstOrCreate(['email' => 'admin1@sifatflow.com'], $verified + [
+                'name' => 'Admin 1',
+                'phone' => '01700000002',
+                'status' => 'active',
+            ]);
+            Admin::firstOrCreate(['email' => 'admin2@sifatflow.com'], $verified + [
+                'name' => 'Admin 2',
+                'phone' => '01700000003',
+                'status' => 'active',
+            ]);
             $instructors = [
-                ['Nusrat Jahan', 'Senior Web Instructor', 'Full stack developer with 8 years of teaching experience.'],
-                ['Tanvir Ahmed', 'Mobile App Instructor', 'Flutter and Android trainer.'],
-                ['Farhana Akter', 'Data Science Instructor', 'Python, statistics and machine learning.'],
-                ['Imran Hossain', 'Design Instructor', 'UI/UX and brand identity designer.'],
-                ['Rakib Hasan', 'Marketing Instructor', 'SEO and digital marketing consultant.'],
+                [
+                    'Nusrat Jahan',
+                    'Senior Web Instructor',
+                    'Full stack developer with 8 years of teaching experience.'
+                ],
+                [
+                    'Tanvir Ahmed',
+                    'Mobile App Instructor',
+                    'Flutter and Android trainer.'
+                ],
+                [
+                    'Farhana Akter',
+                    'Data Science Instructor',
+                    'Python, statistics and machine learning.'
+                ],
+                [
+                    'Imran Hossain',
+                    'Design Instructor',
+                    'UI/UX and brand identity designer.'
+                ],
+                [
+                    'Rakib Hasan',
+                    'Marketing Instructor',
+                    'SEO and digital marketing consultant.'
+                ],
             ];
             foreach ($instructors as $i => [$name, $designation, $bio]) {
                 $n = $i + 1;
                 Instructor::firstOrCreate(['email' => "instructor{$n}@sifatflow.com"], $verified + [
-                    'name' => $name, 'phone' => '017000001'.sprintf('%02d', $n),
-                    'designation' => $designation, 'bio' => $bio, 'status' => 'active',
+                    'name' => $name,
+                    'phone' => '017000001' . sprintf('%02d', $n),
+                    'designation' => $designation,
+                    'bio' => $bio,
+                    'status' => 'active',
                 ]);
             }
 
             $names = [
-                'Rahim Uddin', 'Karim Hossain', 'Sumaiya Akter', 'Jahid Hasan', 'Mehedi Hasan', 'Tasnim Jahan',
-                'Sabbir Ahmed', 'Nadia Islam', 'Arif Rahman', 'Mim Chowdhury', 'Shakil Mahmud', 'Rima Sultana',
-                'Faisal Karim', 'Lamia Khatun', 'Naim Hossain', 'Puja Das', 'Rubel Mia', 'Sharmin Akter',
-                'Zahid Hasan', 'Tamanna Rahman', 'Ovi Khan', 'Maliha Noor', 'Sohel Rana', 'Deleted Student',
+                'Rahim Uddin',
+                'Karim Hossain',
+                'Sumaiya Akter',
+                'Jahid Hasan',
+                'Mehedi Hasan',
+                'Tasnim Jahan',
+                'Sabbir Ahmed',
+                'Nadia Islam',
+                'Arif Rahman',
+                'Mim Chowdhury',
+                'Shakil Mahmud',
+                'Rima Sultana',
+                'Faisal Karim',
+                'Lamia Khatun',
+                'Naim Hossain',
+                'Puja Das',
+                'Rubel Mia',
+                'Sharmin Akter',
+                'Zahid Hasan',
+                'Tamanna Rahman',
+                'Ovi Khan',
+                'Maliha Noor',
+                'Sohel Rana',
+                'Deleted Student',
             ];
             foreach ($names as $i => $name) {
                 $n = $i + 1;
                 $student = Student::firstOrCreate(['email' => "student{$n}@sifatflow.com"], [
                     'name' => $name,
-                    'phone' => '017000002'.sprintf('%02d', $n),
+                    'phone' => '017000002' . sprintf('%02d', $n),
                     'password' => $password,
                     'verified_at' => $n === 4 ? null : now(),
                     'verified_channel' => $n === 4 ? null : 'email',
