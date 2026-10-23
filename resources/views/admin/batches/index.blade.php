@@ -37,7 +37,6 @@
             <x-admin.empty-state icon="layers"
                 :title="request()->hasAny(['q', 'course', 'status']) ? 'No batch matches your filter' : 'No batches yet'"
                 message="Create a batch for a course, then add its class schedule, exams and assignments.">
-                <x-admin.button :href="route('admin.batches.create')"><x-admin.icon name="plus" class="size-4" /> New batch</x-admin.button>
             </x-admin.empty-state>
         </x-admin.card>
     @else

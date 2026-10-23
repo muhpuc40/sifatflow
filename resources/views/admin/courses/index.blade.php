@@ -43,7 +43,6 @@
             <x-admin.empty-state icon="book"
                 :title="request()->hasAny(['q', 'category', 'status']) ? 'No course matches your filter' : 'No courses yet'"
                 message="Create new course, then add its stages, modules and price.">
-                <x-admin.button :href="route('admin.courses.create')"><x-admin.icon name="plus" class="size-4" /> New course</x-admin.button>
             </x-admin.empty-state>
         </x-admin.card>
     @else
