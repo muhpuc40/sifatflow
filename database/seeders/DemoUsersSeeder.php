@@ -3,6 +3,8 @@
 namespace Database\Seeders;
 
 use App\Models\Admin;
+use App\Models\Affiliate;
+use App\Models\AffiliateProfile;
 use App\Models\Instructor;
 use App\Models\Student;
 use Illuminate\Database\Eloquent\Model;
@@ -17,6 +19,10 @@ use Illuminate\Support\Facades\Hash;
  *   student1..24@sifatflow.com
  *     student1  = normal, verified            student3 = suspended
  *     student4  = NOT verified yet            student24 = deleted (soft)
+ *   affiliate1..7@sifatflow.com
+ *     affiliate1,2 = approved (ref link works)   affiliate3 = pending
+ *     affiliate4   = pending + NOT verified      affiliate5 = rejected
+ *     affiliate6   = program suspended           affiliate7 = ACCOUNT suspended (cannot log in)
  */
 class DemoUsersSeeder extends Seeder
 {
@@ -26,7 +32,7 @@ class DemoUsersSeeder extends Seeder
             $password = Hash::make('Password@123');   // hashed once, so seeding stays fast
             $verified = ['password' => $password, 'verified_at' => now(), 'verified_channel' => 'email'];
 
-            Admin::firstOrCreate(['email' => 'admin@sifatflow.com'], $verified + [
+            $superAdmin = Admin::firstOrCreate(['email' => 'admin@sifatflow.com'], $verified + [
                 'name' => 'Super Admin',
                 'phone' => '01700000000',
                 'status' => 'active',
@@ -122,6 +128,42 @@ class DemoUsersSeeder extends Seeder
                 if ($n === 24) {
                     $student->delete();
                 }
+            }
+
+            // name, program status (affiliate_profiles), account status (affiliates), email verified?
+            $affiliates = [
+                ['Sadia Rahman', 'approved', 'active', true],
+                ['Jubayer Ahmed', 'approved', 'active', true],
+                ['Mahfuz Alam', 'pending', 'active', true],
+                ['Nilufa Yasmin', 'pending', 'active', false],
+                ['Rezaul Karim', 'rejected', 'active', true],
+                ['Tanjila Islam', 'suspended', 'active', true],
+                ['Habib Ullah', 'approved', 'suspended', true],
+            ];
+            foreach ($affiliates as $i => [$name, $program, $account, $isVerified]) {
+                $n = $i + 1;
+                $affiliate = Affiliate::firstOrCreate(['email' => "affiliate{$n}@sifatflow.com"], [
+                    'name' => $name,
+                    'phone' => '017000003' . sprintf('%02d', $n),
+                    'password' => $password,
+                    'verified_at' => $isVerified ? now() : null,
+                    'verified_channel' => $isVerified ? 'email' : null,
+                    'status' => $account,
+                ]);
+
+                // pending = nobody has decided yet; every other status was decided by the super admin
+                $decided = $program !== 'pending';
+
+                AffiliateProfile::firstOrCreate(['affiliate_id' => $affiliate->id], [
+                    'ref_code' => strtoupper(strtok($name, ' ')) . sprintf('%03d', 100 + $n),   // SADIA101
+                    'status' => $program,
+                    'approved_by' => $decided ? $superAdmin->id : null,
+                    'approved_at' => $decided ? now() : null,
+                    'payout_method' => $program === 'approved' ? 'mfs' : null,
+                    'payout_provider' => $program === 'approved' ? 'bkash' : null,
+                    'payout_account' => $program === 'approved' ? $affiliate->phone : null,
+                    'payout_account_name' => $program === 'approved' ? $name : null,
+                ]);
             }
         });
     }
