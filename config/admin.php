@@ -32,6 +32,7 @@ return [
 
         ['heading' => 'Security'],
         ['label' => 'Device Limit', 'route' => 'admin.device-limits.index', 'icon' => 'sliders', 'match' => 'admin.device-limits.*'],
+        ['label' => 'Login Info', 'route' => 'admin.login-infos.index', 'icon' => 'lock', 'match' => 'admin.login-infos.*'],
 
         ['heading' => 'System'],
         ['label' => 'Logs', 'route' => 'admin.logs.index', 'icon' => 'file', 'match' => 'admin.logs.*'],
