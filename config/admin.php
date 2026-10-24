@@ -24,10 +24,14 @@ return [
         ['heading' => 'Communication'],
         ['label' => 'SMS composer', 'route' => 'admin.communication.sms.create', 'icon' => 'send', 'match' => 'admin.communication.sms.*'],
         ['label' => 'Email composer', 'route' => 'admin.communication.email.create', 'icon' => 'mail', 'match' => 'admin.communication.email.*'],
+        ['label' => 'Web phone', 'route' => 'admin.communication.softphone.index', 'icon' => 'phone', 'match' => 'admin.communication.softphone.*'],
 
         ['heading' => 'Affiliate'],
         ['label' => 'Affiliates', 'route' => 'admin.affiliates.index', 'icon' => 'users', 'match' => 'admin.affiliates.*'],
         ['label' => 'Settings', 'route' => 'admin.affiliate-settings.edit', 'icon' => 'link', 'match' => 'admin.affiliate-settings.*'],
+
+        ['heading' => 'Security'],
+        ['label' => 'Device Limit', 'route' => 'admin.device-limits.index', 'icon' => 'sliders', 'match' => 'admin.device-limits.*'],
 
         ['heading' => 'System'],
         ['label' => 'Logs', 'route' => 'admin.logs.index', 'icon' => 'file', 'match' => 'admin.logs.*'],

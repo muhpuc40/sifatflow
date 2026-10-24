@@ -19,3 +19,6 @@ Route::get('communication/sms', [SmsComposerController::class, 'create'])
 Route::post('communication/sms', [SmsComposerController::class, 'send'])
     ->middleware('throttle:10,1')
     ->name('admin.communication.sms.send');
+
+Route::view('communication/softphone', 'admin.communication.softphone')
+    ->name('admin.communication.softphone.index');
