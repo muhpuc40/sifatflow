@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Enums\BatchStatus;
+use App\Enums\OrderItemStatus;
+use App\Enums\OrderStatus;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -85,10 +87,20 @@ class Batch extends Model
         return $dates ? collect($dates)->max() : null;
     }
 
-    /** Seats already taken. TODO Phase 3: count the enrollments of this batch here. */
+    /**
+     * Seats already taken: a course sale (order_items.status = active) under an order that is
+     * still live - pending (and not yet expired), partially paid, or paid. A cancelled/expired
+     * order, or one still pending past its expires_at, frees the seat again. There's no separate
+     * enrollment table yet (Checkout is phase 1 of the sales pipeline), so this IS the count -
+     * see CheckoutService, which creates these rows.
+     */
     public function seatsTaken(): int
     {
-        return 0;
+        return OrderItem::where('batch_list_id', $this->id)
+            ->where('status', OrderItemStatus::Active)
+            ->whereHas('order', fn (Builder $q) => $q->whereIn('status', [OrderStatus::Pending, OrderStatus::PartiallyPaid, OrderStatus::Paid])
+                ->where(fn (Builder $q2) => $q2->where('status', '!=', OrderStatus::Pending)->orWhere('expires_at', '>', now())))
+            ->count();
     }
 
     /** Seats still free. null = unlimited. */
